@@ -922,7 +922,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "origin-kit"
+name = "origins-crabby"
 version = "0.1.0"
 dependencies = [
  "clap",
