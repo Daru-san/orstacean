@@ -165,9 +165,12 @@ impl ProgressForm {
             .slow_blink()
             .render(line_area, buf);
 
-        Paragraph::new("(Press 'ctrl+q' or 'ctrl+c' to quit)")
-            .centered()
-            .render(bottom_area, buf);
+        let help = Line::from(vec![
+            Span::styled("Ctrl-Q", Style::default().add_modifier(Modifier::BOLD)),
+            Span::raw(": quit  "),
+        ]);
+
+        help.render(bottom_area, buf);
 
         LineGauge::default()
             .filled_symbol("⣿")
