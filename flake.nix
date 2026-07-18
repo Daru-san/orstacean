@@ -26,6 +26,10 @@
               cargo
               rustc
               rustfmt
+              chafa
+              pkg-config
+              glib
+              clippy
             ];
             RUST_SRC_PATH = pkgs.rustPlatform.rustLibSrc;
           };
