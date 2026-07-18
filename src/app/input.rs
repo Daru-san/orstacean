@@ -121,6 +121,8 @@ impl InputForm {
             Span::raw(": mv end  "),
             Span::styled("Ctrl-U", Style::default().add_modifier(Modifier::BOLD)),
             Span::raw(": clear  "),
+            Span::styled("Ctrl-Q", Style::default().add_modifier(Modifier::BOLD)),
+            Span::raw(": quit  "),
         ]);
 
         frame
