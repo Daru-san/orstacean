@@ -15,7 +15,7 @@ mod dashboard;
 mod input;
 mod puzzles;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 enum State {
     Loading,
     Input,
