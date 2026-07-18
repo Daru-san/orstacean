@@ -158,7 +158,7 @@ impl ProgressForm {
             .outer_color(Color::Cyan)
             .render(spinner_area, buf);
 
-        Paragraph::new("Loading Origins: Crab")
+        Paragraph::new("Loading Origin.Crab")
             .bold()
             .centered()
             .block(Block::bordered())

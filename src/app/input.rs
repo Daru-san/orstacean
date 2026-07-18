@@ -99,7 +99,7 @@ impl InputForm {
         let layout = Layout::vertical([Percentage(100), Min(1)]);
         let [main_area, bottom_area] = main_area.layout(&layout);
 
-        Paragraph::new("Origins: Crab")
+        Paragraph::new("Origin.Crab")
             .bold()
             .centered()
             .block(Block::bordered())
