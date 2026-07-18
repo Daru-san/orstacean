@@ -1,12 +1,14 @@
 use std::time::Duration;
 
-use crossterm::event::{self, KeyCode, KeyModifiers};
+use crossterm::event::{self, KeyCode, KeyEvent, KeyModifiers};
 use ratatui::DefaultTerminal;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Constraint::{Length, Min, Percentage};
 use ratatui::layout::{Layout, Rect};
-use ratatui::style::{Color, Style, Stylize};
-use ratatui::widgets::{Block, LineGauge, Paragraph, Widget};
+use ratatui::style::{Color, Modifier, Style, Stylize};
+use ratatui::text::{Line, Span};
+use ratatui::widgets::{Block, Clear, LineGauge, Paragraph, Widget};
+use tui_popup::Popup;
 use tui_spinner::RectSpinner;
 
 use crate::app::input::InputForm;
@@ -35,6 +37,7 @@ pub struct App {
     state: State,
     progress_form: ProgressForm,
     input_form: InputForm,
+    confirm_state: Option<State>,
 }
 
 impl Default for App {
@@ -47,6 +50,7 @@ impl Default for App {
                 update: true,
             },
             input_form: InputForm::new(),
+            confirm_state: None,
         }
     }
 }
@@ -54,15 +58,33 @@ impl Default for App {
 impl App {
     pub fn run(mut self, terminal: &mut DefaultTerminal) -> color_eyre::Result<()> {
         while self.state != State::Quit {
-            terminal.draw(|frame| match self.state {
-                State::Loading => frame.render_widget(&self.progress_form, frame.area()),
-                State::Input => {
-                    self.input_form.draw(frame);
+            terminal.draw(|frame| {
+                match self.state {
+                    State::Loading => frame.render_widget(&self.progress_form, frame.area()),
+                    State::Input => {
+                        self.input_form.draw(frame);
+                    }
+                    State::Welcome => {}
+                    State::Ready => {}
+                    State::Reset => frame.render_widget("Resetting", frame.area()),
+                    State::Quit => unreachable!(),
                 }
-                State::Welcome => {}
-                State::Ready => {}
-                State::Reset => frame.render_widget("Resetting", frame.area()),
-                State::Quit => unreachable!(),
+
+                if let Some(state) = self.confirm_state {
+                    match state {
+                        State::Quit => {
+                            let popup =
+                                Popup::new("Press Enter or Escape to quit").title("Confirmation");
+                            frame.render_widget(popup, frame.area());
+                        }
+                        State::Reset => {
+                            let popup =
+                                Popup::new("Press Enter or Escape to reset").title("Confirmation");
+                            frame.render_widget(popup, frame.area());
+                        }
+                        _ => {}
+                    }
+                }
             })?;
             self.handle_events()?;
             self.update(terminal.size()?.width);
@@ -109,11 +131,29 @@ impl App {
                 return Ok(());
             }
         }
+        let mut check_state = |key: KeyEvent| -> bool {
+            if let Some(state) = self.confirm_state
+                && key.modifiers.is_empty()
+            {
+                if matches!(key.code, KeyCode::Esc) {
+                    self.confirm_state.take();
+                    return true;
+                }
+                if matches!(key.code, KeyCode::Enter) {
+                    self.state = state;
+                    return true;
+                }
+            }
+            false
+        };
         if let Some(key) = event::read()?.as_key_press_event() {
+            if check_state(key) {
+                return Ok(());
+            }
             if (matches!(key.code, KeyCode::Char('q')) || matches!(key.code, KeyCode::Char('c')))
                 && key.modifiers.eq(&KeyModifiers::CONTROL)
             {
-                self.state = State::Quit;
+                self.confirm_state.replace(State::Quit);
                 return Ok(());
             }
 
@@ -121,7 +161,7 @@ impl App {
                 && key.modifiers.eq(&KeyModifiers::CONTROL)
                 && !matches!(self.state, State::Loading)
             {
-                self.reset();
+                self.confirm_state.replace(State::Reset);
                 return Ok(());
             }
             match self.state {
