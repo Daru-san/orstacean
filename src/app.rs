@@ -28,6 +28,7 @@ enum State {
 struct ProgressForm {
     value: f64,
     columns: u16,
+    update: bool,
 }
 
 pub struct App {
@@ -43,6 +44,7 @@ impl Default for App {
             progress_form: ProgressForm {
                 value: 0.,
                 columns: 0,
+                update: true,
             },
             input_form: InputForm::new(),
         }
@@ -71,10 +73,12 @@ impl App {
     fn update(&mut self, terminal_width: u16) {
         match self.state {
             State::Loading => {
-                self.progress_form.columns =
-                    (self.progress_form.columns + 1).clamp(0, terminal_width);
-                self.progress_form.value =
-                    f64::from(self.progress_form.columns) / f64::from(terminal_width);
+                if self.progress_form.update {
+                    self.progress_form.columns =
+                        (self.progress_form.columns + 1).clamp(0, terminal_width);
+                    self.progress_form.value =
+                        f64::from(self.progress_form.columns) / f64::from(terminal_width);
+                }
 
                 if self.progress_form.value >= 1. {
                     self.state = State::Input;
@@ -100,7 +104,8 @@ impl App {
         if matches!(self.state, State::Loading) {
             let n = rand::random_range(0.1..5.0);
             let timeout = Duration::from_secs_f32(n / 50.0);
-            if !event::poll(timeout)? {
+            self.progress_form.update = !event::poll(timeout)?;
+            if self.progress_form.update {
                 return Ok(());
             }
         }
