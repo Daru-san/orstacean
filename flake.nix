@@ -18,9 +18,46 @@
       perSystem =
         {
           pkgs,
+          lib,
           ...
         }:
+        let
+          fs = lib.fileset;
+        in
         {
+          packages.default = pkgs.rustPlatform.buildRustPackage {
+            pname = "origins.crab";
+            version = "0.1";
+            src = fs.toSource {
+              root = ./.;
+              fileset = fs.intersection (fs.fromSource (lib.sources.cleanSource ./.)) (
+                fs.unions [
+                  ./src
+                  ./Cargo.toml
+                  ./Cargo.lock
+                  ./assets
+                ]
+              );
+            };
+
+            cargoLock = {
+              lockFile = ./Cargo.lock;
+              outputHashes = {
+                "ratatui-form-0.1.1" = "sha256-IGYUhY9H61J77vecEvItVce5lTy00OUf+0VTIvdBV3I=";
+              };
+            };
+
+            buildInputs = with pkgs; [
+              chafa
+              glib
+            ];
+
+            meta = {
+              maintainers = [ lib.maintainers.Daru-san ];
+              mainProgram = "origin-crab";
+              license = lib.licenses.bsd3;
+            };
+          };
           devShells.default = pkgs.mkShell {
             buildInputs = with pkgs; [
               cargo
@@ -33,7 +70,6 @@
             ];
             RUST_SRC_PATH = pkgs.rustPlatform.rustLibSrc;
           };
-          packages.default = pkgs.hello;
         };
     };
 }
