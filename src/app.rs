@@ -93,9 +93,42 @@ impl App {
                 if let Some(state) = self.confirm_state {
                     match state {
                         State::Quit => {
-                            let popup =
-                                Popup::new("Press Enter or Escape to quit").title("Confirmation");
-                            frame.render_widget(popup, frame.area());
+                            match self.state {
+                                State::Ready => {
+                                    let mut text = Text::default();
+                                    text.push_line("Are you sure you want to leave? You'll lose all your progress if you do.");
+                                    text.push_line("Press Enter to quit. Press Escape to continue.");
+                                    text.push_line("I recommend the latter, if you value your sanity.");
+                                    let popup = Popup::new(text)
+                                        .title("🦀 Ferris");
+                                    frame.render_widget(popup, frame.area());
+                                }
+                                State::Loading => {
+                                    let mut text = Text::default();
+                                    text.push_line("Are you sure you want to leave? We haven't even started.");
+                                    text.push_line("Press Enter to quit. Press Escape to continue.");
+                                    let popup = Popup::new(text)
+                                        .title("🦀 Ferris");
+                                    frame.render_widget(popup, frame.area());
+                                }
+                                State::Input => {
+                                    let mut text = Text::default();
+                                    text.push_line("Are you sure you want to leave? I'm still getting to know you.");
+                                    text.push_line("Press Enter to quit. Press Escape to continue.");
+                                    let popup = Popup::new(text)
+                                        .title("🦀 Ferris");
+                                    frame.render_widget(popup, frame.area());
+                                }
+                                State::Dashboard(_) => {
+                                    let mut text = Text::default();
+                                    text.push_line("Leaving?! I'm talking to you!!");
+                                    text.push_line("Press Enter to quit. Press Escape to continue.");
+                                    let popup = Popup::new(text)
+                                        .title("🦀 Ferris");
+                                    frame.render_widget(popup, frame.area());
+                                }
+                                _ => unreachable!()
+                            }
                         }
                         State::Reset => {
                             let popup =
