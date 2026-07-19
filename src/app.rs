@@ -6,8 +6,9 @@ use ratatui::buffer::Buffer;
 use ratatui::layout::Constraint::{Length, Min, Percentage};
 use ratatui::layout::{Layout, Rect};
 use ratatui::style::{Color, Modifier, Style, Stylize};
-use ratatui::text::{Line, Span};
-use ratatui::widgets::{Block, Clear, LineGauge, Paragraph, Widget};
+use ratatui::text::{Line, Span, Text};
+use ratatui::widgets::{Block, LineGauge, Paragraph, Widget};
+use ratatui_splash_screen::{SplashConfig, SplashScreen};
 use tui_popup::Popup;
 use tui_spinner::RectSpinner;
 
@@ -16,6 +17,13 @@ use crate::app::input::InputForm;
 mod dashboard;
 mod input;
 mod puzzles;
+
+pub static SPLASH_CONFIG: SplashConfig = SplashConfig {
+    image_data: include_bytes!("../assets/rustacean-flat-gesture.png"),
+    sha256sum: None,
+    render_steps: 6,
+    use_colors: true,
+};
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 enum State {
@@ -31,6 +39,7 @@ struct ProgressForm {
     value: f64,
     columns: u16,
     update: bool,
+    splash_screen: SplashScreen,
 }
 
 pub struct App {
@@ -40,18 +49,20 @@ pub struct App {
     confirm_state: Option<State>,
 }
 
-impl Default for App {
-    fn default() -> Self {
-        Self {
+impl App {
+    pub fn new() -> color_eyre::Result<Self> {
+        Ok(Self {
             state: State::Loading,
             progress_form: ProgressForm {
                 value: 0.,
                 columns: 0,
                 update: true,
+                splash_screen: SplashScreen::new(SPLASH_CONFIG)?,
             },
             input_form: InputForm::new(),
             confirm_state: None,
-        }
+            dashboard: Dashboard::default(),
+        })
     }
 }
 
@@ -187,7 +198,7 @@ impl App {
 }
 
 impl ProgressForm {
-    fn render_progress(&self, area: Rect, buf: &mut Buffer) {
+    fn render_progress(&mut self, area: Rect, buf: &mut Buffer) {
         let layout = Layout::vertical([Length(3), Min(0)]);
         let [header_area, main_area] = area.layout(&layout);
 
@@ -217,17 +228,22 @@ impl ProgressForm {
 
         help.render(bottom_area, buf);
 
+        let layout = Layout::vertical([Min(1), Percentage(100)]);
+        let [gauge_area, crab_area] = main_area.layout(&layout);
+
         LineGauge::default()
             .filled_symbol("⣿")
             .unfilled_symbol("⣿")
             .filled_style(Style::default().fg(Color::Indexed(149)))
             .unfilled_style(Style::default().fg(Color::Indexed(58)))
             .ratio(self.value)
-            .render(main_area, buf);
+            .render(gauge_area, buf);
+
+        self.splash_screen.render(crab_area, buf);
     }
 }
 
-impl Widget for &ProgressForm {
+impl Widget for &mut ProgressForm {
     fn render(self, area: Rect, buf: &mut Buffer)
     where
         Self: Sized,
