@@ -13,7 +13,6 @@ use ratatui::Frame;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Constraint::{Length, Min, Percentage};
 use ratatui::layout::{Layout, Rect};
-use ratatui::macros::text;
 use ratatui::style::{Color, Modifier, Style, Stylize};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Paragraph, Widget};
@@ -25,8 +24,8 @@ pub struct InputForm {
 }
 
 pub struct InputResult {
-    name: String,
-    age: u8,
+    pub name: String,
+    pub age: u8,
 }
 
 impl InputForm {
