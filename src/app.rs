@@ -225,6 +225,7 @@ impl App {
                     return true;
                 }
                 if matches!(key.code, KeyCode::Enter) {
+                    self.confirm_state.take();
                     self.state = state;
                     return true;
                 }
