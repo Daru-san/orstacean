@@ -55,7 +55,8 @@ impl InputForm {
 
     pub fn update(&mut self) -> Option<InputResult> {
         match self.form.result() {
-            ratatui_form::FormResult::Active => {
+            ratatui_form::FormResult::Active => None,
+            ratatui_form::FormResult::Submitted => {
                 let value = self.form.to_json();
                 let name = value
                     .get("name")
@@ -68,9 +69,12 @@ impl InputForm {
                     .as_u64()
                     .unwrap_or(0) as u8;
 
-                Some(InputResult { name, age })
+                if name.is_empty() || age == 0 {
+                    None
+                } else {
+                    Some(InputResult { name, age })
+                }
             }
-            ratatui_form::FormResult::Submitted => None,
             ratatui_form::FormResult::Cancelled => None,
         }
     }
