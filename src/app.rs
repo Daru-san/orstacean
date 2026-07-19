@@ -216,6 +216,11 @@ impl App {
                 return Ok(());
             }
         }
+
+        let timeout = Duration::from_secs_f32(1.0 / 20.0);
+        if !event::poll(timeout)? {
+            return Ok(());
+        }
         let mut check_state = |key: KeyEvent| -> bool {
             if let Some(state) = self.confirm_state
                 && key.modifiers.is_empty()
