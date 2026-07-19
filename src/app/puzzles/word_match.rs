@@ -1,0 +1,182 @@
+use std::collections::BTreeMap;
+
+use crossterm::event;
+use crossterm::event::Event;
+use crossterm::event::KeyCode;
+use crossterm::event::KeyModifiers;
+use rand::seq::SliceRandom;
+use ratatui::Frame;
+use ratatui::buffer::Buffer;
+use ratatui::layout::Constraint::Min;
+use ratatui::layout::Constraint::Percentage;
+use ratatui::layout::Direction;
+use ratatui::layout::Layout;
+use ratatui::layout::Rect;
+use ratatui::style::Color;
+use ratatui::style::Modifier;
+use ratatui::style::Style;
+use ratatui::symbols::border;
+use ratatui::text::Line;
+use ratatui::text::Span;
+use ratatui::widgets::Widget;
+use ratatui::widgets::{Block, Borders};
+use ratatui_hypertile::HypertileWidget;
+use ratatui_hypertile::{Hypertile, HypertileAction, MoveScope, PaneId, PaneSnapshot, Towards};
+
+use crate::app::puzzles::IPuzzle;
+
+type PaneMap = BTreeMap<PaneId, (char, Color)>;
+
+pub struct PaneGrid {
+    word: &'static str,
+    panes: PaneMap,
+    layout: Hypertile,
+    focused: usize,
+    completed: bool,
+}
+
+impl PaneGrid {
+    pub fn new(word: &'static str) -> Self {
+        let mut panes = PaneMap::from_iter([(PaneId::ROOT, ('%', Color::White))]);
+        let layout = Hypertile::new();
+
+        let mut chars: Vec<char> = word.chars().collect();
+
+        let mut rng = rand::rng();
+        // shuffle chars
+        chars.shuffle(&mut rng);
+
+        for (i, c) in chars.into_iter().enumerate() {
+            panes.insert(PaneId::new(i as u64), (c, Color::White));
+        }
+
+        Self {
+            word,
+            layout,
+            focused: 0,
+            panes,
+            completed: false,
+        }
+    }
+
+    pub fn completed(&self) -> bool {
+        self.completed
+    }
+
+    fn check_sorted(&self) -> bool {
+        let word = self
+            .panes
+            .iter()
+            .map(|(_, (char, _))| *char)
+            .collect::<String>();
+
+        word.eq(&self.word)
+    }
+}
+
+impl IPuzzle for PaneGrid {
+    fn render(&mut self, frame: &mut Frame, area: Rect) {
+        frame.render_stateful_widget(
+            HypertileWidget::new(|pane, buf| render_pane(pane, buf, &self.panes)),
+            area,
+            &mut self.layout,
+        );
+    }
+    fn update(&mut self) {}
+    fn handle_events(&mut self) -> color_eyre::Result<()> {
+        let Event::Key(key) = event::read()? else {
+            return Ok(());
+        };
+
+        let none = key.modifiers == KeyModifiers::NONE;
+        let shift = key.modifiers == KeyModifiers::SHIFT;
+
+        match key.code {
+            KeyCode::Enter => {}
+            KeyCode::Left | KeyCode::Char('h') if none => {
+                focus(&mut self.layout, Direction::Horizontal, Towards::Start)
+            }
+            KeyCode::Right | KeyCode::Char('l') if none => {
+                focus(&mut self.layout, Direction::Horizontal, Towards::End)
+            }
+            KeyCode::Up | KeyCode::Char('k') if none => {
+                focus(&mut self.layout, Direction::Vertical, Towards::Start)
+            }
+            KeyCode::Down | KeyCode::Char('j') if none => {
+                focus(&mut self.layout, Direction::Vertical, Towards::End)
+            }
+
+            KeyCode::Char('H') if shift => {
+                move_pane(&mut self.layout, Direction::Horizontal, Towards::Start)
+            }
+            KeyCode::Char('L') if shift => {
+                move_pane(&mut self.layout, Direction::Horizontal, Towards::End)
+            }
+            KeyCode::Char('K') if shift => {
+                move_pane(&mut self.layout, Direction::Vertical, Towards::Start)
+            }
+            KeyCode::Char('J') if shift => {
+                move_pane(&mut self.layout, Direction::Vertical, Towards::End)
+            }
+            KeyCode::Char('S') if shift => {
+                if self.check_sorted() {
+                    self.completed = true;
+                } else {
+                    panic!("");
+                    // throw error
+                }
+            }
+            _ => {}
+        }
+        Ok(())
+    }
+
+    fn keys_hints<'a>(&self) -> Line<'a> {
+        Line::from(vec![
+            Span::styled("Ctrl-Q", Style::default().add_modifier(Modifier::BOLD)),
+            Span::raw(": quit  "),
+            Span::styled("Ctrl-R", Style::default().add_modifier(Modifier::BOLD)),
+            Span::raw(": reset  "),
+            Span::styled("H or ◄", Style::default().add_modifier(Modifier::BOLD)),
+            Span::raw(": left  "),
+            Span::styled("J or ▲", Style::default().add_modifier(Modifier::BOLD)),
+            Span::raw(": up  "),
+            Span::styled("K or ▼", Style::default().add_modifier(Modifier::BOLD)),
+            Span::raw(": down  "),
+            Span::styled("L or ►", Style::default().add_modifier(Modifier::BOLD)),
+            Span::raw(": down  "),
+            Span::styled("Enter", Style::default().add_modifier(Modifier::BOLD)),
+            Span::raw(": select letter  "),
+        ])
+    }
+}
+
+fn move_pane(layout: &mut Hypertile, direction: Direction, towards: Towards) {
+    layout.apply_action(HypertileAction::MoveFocused {
+        direction,
+        towards,
+        scope: MoveScope::Window,
+    });
+}
+
+fn focus(layout: &mut Hypertile, direction: Direction, towards: Towards) {
+    layout.apply_action(HypertileAction::FocusDirection { direction, towards });
+}
+
+fn render_pane(pane: PaneSnapshot, buf: &mut Buffer, panes: &PaneMap) {
+    let (title, color) = panes
+        .get(&pane.id)
+        .map(|(t, c)| (*t, *c))
+        .unwrap_or(('%', Color::White));
+
+    let mut block = Block::default()
+        .borders(Borders::ALL)
+        .border_style(Style::default().fg(color))
+        .title(title.to_string());
+    if pane.is_focused {
+        block = block
+            .border_set(border::THICK)
+            .border_style(Style::default().fg(color).bold());
+    }
+    block.render(pane.rect, buf);
+}
