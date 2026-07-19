@@ -71,12 +71,11 @@ impl App {
         })
     }
 
-impl App {
     pub fn run(mut self, terminal: &mut DefaultTerminal) -> color_eyre::Result<()> {
         while self.state != State::Quit {
             terminal.draw(|frame| {
                 match self.state {
-                    State::Loading => frame.render_widget(&self.progress_form, frame.area()),
+                    State::Loading => frame.render_widget(&mut self.progress_form, frame.area()),
                     State::Input => {
                         self.input_form.draw(frame);
                     }
