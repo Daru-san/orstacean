@@ -12,8 +12,10 @@ use ratatui_splash_screen::{SplashConfig, SplashScreen};
 use tui_popup::Popup;
 use tui_spinner::RectSpinner;
 
+use crate::app::dashboard::{Dashboard, Stage};
 use crate::app::input::InputForm;
 
+mod chat_box;
 mod dashboard;
 mod input;
 mod puzzles;
@@ -29,7 +31,7 @@ pub static SPLASH_CONFIG: SplashConfig = SplashConfig {
 enum State {
     Loading,
     Input,
-    Welcome,
+    Dashboard(Stage),
     Ready,
     Quit,
     Reset,
@@ -47,6 +49,7 @@ pub struct App {
     progress_form: ProgressForm,
     input_form: InputForm,
     confirm_state: Option<State>,
+    dashboard: Dashboard,
 }
 
 impl App {
@@ -75,7 +78,9 @@ impl App {
                     State::Input => {
                         self.input_form.draw(frame);
                     }
-                    State::Welcome => {}
+                    State::Dashboard(_) => {
+                        self.dashboard.render(frame);
+                    }
                     State::Ready => {}
                     State::Reset => frame.render_widget("Resetting", frame.area()),
                     State::Quit => unreachable!(),
@@ -93,17 +98,34 @@ impl App {
                                 Popup::new("Press Enter or Escape to reset").title("Confirmation");
                             frame.render_widget(popup, frame.area());
                         }
+                        State::Ready => {
+                            if let State::Dashboard(stage) = self.state {
+                                match stage {
+                                    Stage::Greeting => {
+                                        let popup = Popup::new("Press Enter to continue.")
+                                            .title("Conformation");
+                                        frame.render_widget(popup, frame.area());
+                                    }
+                                    Stage::PuzzleIntro => {
+                                        let popup =
+                                            Popup::new("Press Enter to begin with the puzzles")
+                                                .title("Conformation");
+                                        frame.render_widget(popup, frame.area());
+                                    }
+                                }
+                            }
+                        }
                         _ => {}
                     }
                 }
             })?;
             self.handle_events()?;
-            self.update(terminal.size()?.width);
+            self.update(terminal.size()?.width)?;
         }
         Ok(())
     }
 
-    fn update(&mut self, terminal_width: u16) {
+    fn update(&mut self, terminal_width: u16) -> color_eyre::Result<()> {
         match self.state {
             State::Loading => {
                 if self.progress_form.update {
@@ -114,23 +136,38 @@ impl App {
                 }
 
                 if self.progress_form.value >= 1. {
-                    self.state = State::Input;
+                    self.state = State::Dashboard(Stage::Greeting);
+                    self.dashboard.greet();
                 }
             }
             State::Input => {
                 let result = self.input_form.update();
                 if let Some(result) = result {
-                    self.state = State::Ready;
+                    self.dashboard.introduce_puzzles(result.name, result.age);
+                    self.state = State::Dashboard(Stage::PuzzleIntro);
                 }
             }
             State::Ready => {}
-            State::Welcome => {}
+            State::Dashboard(stage) => {
+                if self.dashboard.update()? {
+                    match stage {
+                        Stage::Greeting => {
+                            self.confirm_state.replace(State::Input);
+                        }
+                        Stage::PuzzleIntro => {
+                            self.confirm_state.replace(State::Ready);
+                        }
+                    }
+                }
+            }
             State::Quit => {}
             State::Reset => {
                 self.input_form = InputForm::new();
                 self.state = State::Input;
             }
         }
+
+        Ok(())
     }
 
     fn handle_events(&mut self) -> color_eyre::Result<()> {
@@ -180,7 +217,9 @@ impl App {
                 State::Input => {
                     self.input_form.handle_event(event::read()?);
                 }
-                State::Welcome => {}
+                State::Dashboard(_) => {
+                    self.dashboard.handle_events()?;
+                }
                 State::Quit => {}
                 State::Reset => {}
                 State::Ready => {}
