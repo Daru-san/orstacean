@@ -14,6 +14,7 @@ use tui_spinner::RectSpinner;
 
 use crate::app::dashboard::{Dashboard, Stage};
 use crate::app::input::InputForm;
+use crate::app::puzzles::PuzzleView;
 
 mod chat_box;
 mod dashboard;
@@ -50,6 +51,7 @@ pub struct App {
     input_form: InputForm,
     confirm_state: Option<State>,
     dashboard: Dashboard,
+    puzzle_view: PuzzleView,
 }
 
 impl App {
@@ -65,9 +67,9 @@ impl App {
             input_form: InputForm::new(),
             confirm_state: None,
             dashboard: Dashboard::default(),
+            puzzle_view: PuzzleView::new(),
         })
     }
-}
 
 impl App {
     pub fn run(mut self, terminal: &mut DefaultTerminal) -> color_eyre::Result<()> {
@@ -81,7 +83,9 @@ impl App {
                     State::Dashboard(_) => {
                         self.dashboard.render(frame);
                     }
-                    State::Ready => {}
+                    State::Ready => {
+                        self.puzzle_view.render(frame, frame.area());
+                    }
                     State::Reset => frame.render_widget("Resetting", frame.area()),
                     State::Quit => unreachable!(),
                 }
