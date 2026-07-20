@@ -124,16 +124,16 @@ impl IPuzzle for PaneGrid {
                 focus(&mut self.layout, Direction::Vertical, Towards::End)
             }
 
-            KeyCode::Char('H') if shift => {
+            KeyCode::Left | KeyCode::Char('H') if shift => {
                 move_pane(&mut self.layout, Direction::Horizontal, Towards::Start)
             }
-            KeyCode::Char('L') if shift => {
+            KeyCode::Right | KeyCode::Char('L') if shift => {
                 move_pane(&mut self.layout, Direction::Horizontal, Towards::End)
             }
-            KeyCode::Char('K') if shift => {
+            KeyCode::Up | KeyCode::Char('K') if shift => {
                 move_pane(&mut self.layout, Direction::Vertical, Towards::Start)
             }
-            KeyCode::Char('J') if shift => {
+            KeyCode::Down | KeyCode::Char('J') if shift => {
                 move_pane(&mut self.layout, Direction::Vertical, Towards::End)
             }
             KeyCode::Char('S') if shift => {
