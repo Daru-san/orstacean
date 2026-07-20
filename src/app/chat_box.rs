@@ -38,19 +38,9 @@ pub struct ChatBox {
     volume: Rc<Cell<f32>>,
 }
 
-impl Default for ChatBox {
-    fn default() -> Self {
-        Self {
-            messages: Vec::new(),
-            current_message: 0,
-            revealed_chars: 0,
-            last_tick: Instant::now(),
-            char_delay: Duration::from_millis(50),
-            msg_pause: Duration::from_millis(400),
-            pause_start: None,
-            scroll_state: ScrollViewState::new(),
-        }
-    }
+fn message_height(text: &str, inner_width: u16) -> u16 {
+    let paragraph = Paragraph::new(text).wrap(Wrap { trim: false });
+    paragraph.line_count(inner_width) as u16 + 2
 }
 
 impl ChatBox {
@@ -72,44 +62,40 @@ impl ChatBox {
     }
 
     pub fn render(&mut self, frame: &mut Frame, area: Rect) {
-        let buf = frame.buffer_mut();
+        let width = area.width;
+        let inner_width = width.saturating_sub(2);
 
-        let mut scroll_view = ScrollView::new(Size::new(buf.area.width, buf.area.height));
-
-        let scroll_buf = scroll_view.buf_mut();
-
-        let paragraphs = self.messages[..=self
-            .current_message
-            .min(self.messages.len().saturating_sub(1))]
+        let heights: Vec<u16> = self
+            .messages
             .iter()
-            .enumerate()
-            .map(|(index, message)| {
-                let text = if index == self.current_message && !self.done() {
-                    message
-                        .chars()
-                        .take(self.revealed_chars)
-                        .collect::<String>()
-                } else {
-                    message.into()
-                };
+            .map(|m| message_height(m, inner_width))
+            .collect();
 
+        let total_height: u16 = heights.iter().sum();
+        let mut scroll_view = ScrollView::new(Size::new(width, total_height))
+            .scrollbars_visibility(tui_scrollview::ScrollbarVisibility::Automatic);
+
+        let mut y = 0;
+        for (index, (msg, height)) in self.messages.iter().zip(&heights).enumerate() {
+            if index > self.current_message {
+                break;
+            }
+            let text = if index == self.current_message && !self.done() {
+                msg.chars().take(self.revealed_chars).collect::<String>()
+            } else {
+                msg.to_string()
+            };
+            let rect = Rect::new(0, y, width, *height);
+            scroll_view.render_widget(
                 Paragraph::new(text)
                     .block(block())
-                    .wrap(Wrap { trim: false })
-            })
-            .collect::<Vec<_>>();
-
-        let constraints = paragraphs
-            .iter()
-            .map(|_| Constraint::Length(3))
-            .collect::<Vec<_>>();
-        let chunks = Layout::vertical(constraints).split(scroll_buf.area);
-
-        for (paragraph, chunk) in paragraphs.into_iter().zip(chunks.iter()) {
-            paragraph.render(*chunk, scroll_buf);
+                    .wrap(Wrap { trim: false }),
+                rect,
+            );
+            y += height;
         }
 
-        scroll_view.render(area, buf, &mut self.scroll_state);
+        frame.render_stateful_widget(scroll_view, area, &mut self.scroll_state);
     }
 
     pub fn update(&mut self) -> color_eyre::Result<bool> {
