@@ -1566,7 +1566,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "oricrabby"
+name = "orstacean"
 version = "0.1.0"
 dependencies = [
  "clap",
