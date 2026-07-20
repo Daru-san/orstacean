@@ -13,12 +13,20 @@ use tui_popup::Popup;
 use crate::app::puzzles::IPuzzle;
 use crate::app::puzzles::timer::Timer;
 
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
+pub struct Position {
+    x: u16,
+    y: u16,
+}
+
 pub struct Maze {
     grid: Vec<Vec<char>>,
-    player: (u16, u16),
     completed: bool,
     failed: bool,
     timer: Timer,
+    player: Position,
+    goal: Position,
+    start: Position,
 }
 
 const START: char = 'S';
@@ -43,9 +51,26 @@ impl Maze {
             .map(|line| line.chars().collect())
             .collect::<Vec<Vec<_>>>();
 
+        let mut start = Position::default();
+        let mut goal = Position::default();
+
+        for (y, row) in grid.iter().enumerate() {
+            for (x, &ch) in row.iter().enumerate() {
+                if ch == START {
+                    start.x = x as u16;
+                    start.y = y as u16;
+                } else if ch == GOAL {
+                    goal.x = x as u16;
+                    goal.y = y as u16;
+                }
+            }
+        }
+
         Self {
             grid,
-            player: (0, 0),
+            player: start,
+            goal,
+            start,
             timer: Timer::new(timeout),
             completed: false,
             failed: false,
@@ -53,7 +78,7 @@ impl Maze {
     }
 
     pub fn try_move(&mut self, dx: i16, dy: i16) {
-        let (x, y) = self.player;
+        let Position { x, y } = self.player;
         let nx = x as i16 + dx;
         let ny = y as i16 + dy;
         if nx < 0 || ny < 0 {
@@ -61,7 +86,8 @@ impl Maze {
         }
         let (nx, ny) = (nx as usize, ny as usize);
         if self.grid[ny][nx] != '#' {
-            self.player = (nx as u16, ny as u16);
+            self.player.x = nx as u16;
+            self.player.y = ny as u16;
         }
     }
 
@@ -72,10 +98,14 @@ impl Maze {
                 if px >= area.right() || py >= area.bottom() {
                     continue;
                 }
-                let (symbol, style) = if (x as u16, y as u16) == self.player {
+                let (symbol, style) = if (x as u16, y as u16) == (self.player.x, self.player.y) {
                     ("@", Style::default().fg(Color::Yellow))
                 } else if ch == '#' {
                     ("█", Style::default().fg(Color::DarkGray))
+                } else if ch == GOAL {
+                    ("G", Style::default().fg(Color::DarkGray))
+                } else if ch == START {
+                    ("S", Style::default().fg(Color::DarkGray))
                 } else {
                     (" ", Style::default())
                 };
