@@ -5,6 +5,8 @@ use crate::app::App;
 
 mod app;
 
+pub const APP_NAME: &'static str = "Orstacean";
+
 fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
 

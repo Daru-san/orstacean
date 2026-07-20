@@ -334,7 +334,7 @@ impl ProgressForm {
             .outer_color(Color::Cyan)
             .render(spinner_area, buf);
 
-        Paragraph::new("Loading Oricrabby")
+        Paragraph::new(format!("Loading {}", APP_NAME))
             .bold()
             .centered()
             .block(Block::bordered())
