@@ -1,5 +1,7 @@
 use std::cell::{Ref, RefCell};
+use std::ops::AddAssign;
 use std::rc::Rc;
+use std::time::Duration;
 
 use crossterm::event::{self, Event, KeyCode, KeyEvent};
 use ratatui::Frame;
@@ -13,11 +15,12 @@ use crate::APP_NAME;
 use crate::app::AppState;
 use crate::app::chat_box::ChatBox;
 use crate::app::puzzles::maze::Maze;
-use crate::app::puzzles::word_match::PaneGrid;
+use crate::app::puzzles::word_match::WordMatch;
 
 mod cipher;
 mod maze;
 mod riddles;
+mod timer;
 mod word_match;
 
 pub struct PuzzleView {
@@ -26,6 +29,7 @@ pub struct PuzzleView {
     puzzle: Rc<RefCell<dyn IPuzzle>>,
     chatbox: ChatBox,
     state: AppState,
+    failures: u128,
 }
 
 enum Puzzle {
@@ -42,19 +46,22 @@ pub trait IPuzzle {
     fn render(&mut self, frame: &mut Frame, area: Rect);
     fn keys_hints<'a>(&self) -> Line<'a>;
     fn instructions(&self) -> Vec<String>;
+    fn completed(&self) -> bool;
+    fn failed(&self) -> bool;
 }
 
 impl PuzzleView {
     pub fn new(state: AppState) -> color_eyre::Result<Self> {
-        let grid = PaneGrid::new("CRAB")?;
+        let grid = WordMatch::new("CRAB", None)?;
         let instructions = grid.instructions();
         let puzzle = Rc::new(RefCell::new(grid));
         Ok(Self {
             chatbox: ChatBox::new(&instructions, state.clone()),
             results: Vec::new(),
-            active_puzzle: Puzzle::Tile1(puzzle.clone()),
+            active_puzzle: Puzzle::Tile1,
             puzzle,
             state,
+            failures: 0,
         })
     }
 
@@ -118,7 +125,136 @@ impl PuzzleView {
             Ok(())
         } else {
             let mut puzzle = self.puzzle.borrow_mut();
-            Ok(puzzle.update())
+            puzzle.update();
+
+            if puzzle.completed() {
+                drop(puzzle);
+                self.advance()?;
+            } else if puzzle.failed() {
+                drop(puzzle);
+                self.demote()?;
+            }
+            Ok(())
         }
+    }
+
+    pub fn advance(&mut self) -> color_eyre::Result<()> {
+        match self.active_puzzle {
+            Puzzle::Tile1 => {
+                let next = WordMatch::new("CRUSTACEAN", Some(Duration::from_mins(5)))?;
+                let instructions = next.instructions();
+                let puzzle = Rc::new(RefCell::new(next));
+
+                self.active_puzzle = Puzzle::Tile2;
+                self.puzzle = puzzle;
+                self.chatbox = ChatBox::new(
+                    &[
+                        vec![
+                            String::from("Congratulations on finishing the last puzzle."),
+                            String::from("It only gets harder from here."),
+                        ],
+                        instructions,
+                    ]
+                    .into_iter()
+                    .flatten()
+                    .collect::<Vec<_>>(),
+                    self.state.clone(),
+                );
+
+                self.results.push(String::from("Crab"));
+            }
+            Puzzle::Tile2 => {
+                self.results.push(String::from("Crustacean"));
+            }
+            Puzzle::Riddle => {
+                let next = Maze::new(Duration::from_mins(5));
+                let instructions = next.instructions();
+                let puzzle = Rc::new(RefCell::new(next));
+
+                self.active_puzzle = Puzzle::Tile2;
+                self.puzzle = puzzle;
+                self.chatbox = ChatBox::new(
+                    &[
+                        vec![
+                            String::from("Congratulations on finishing the last puzzle."),
+                            String::from("I will admit that the rules were rather unfair."),
+                            String::from("Now we move on to my favorite puzzle."),
+                        ],
+                        instructions,
+                    ]
+                    .into_iter()
+                    .flatten()
+                    .collect::<Vec<_>>(),
+                    self.state.clone(),
+                );
+
+                // self.results.push(String::from("Crab"));
+            }
+            _ => unimplemented!(),
+        }
+
+        Ok(())
+    }
+
+    pub fn demote(&mut self) -> color_eyre::Result<()> {
+        match self.active_puzzle {
+            Puzzle::Tile1 => {
+                let next = WordMatch::new("CRAB", Some(Duration::from_mins(2)))?;
+                let instructions = next.instructions();
+                let puzzle = Rc::new(RefCell::new(next));
+
+                self.active_puzzle = Puzzle::Tile1;
+                self.puzzle = puzzle;
+                self.chatbox = ChatBox::new(
+                    &[
+                        vec![
+                            String::from(
+                                "Unfortunately, you've failed the first and simplest puzzle.",
+                            ),
+                            String::from("I am incredibly disappointed."),
+                            String::from("Luckily for you, I am a benevolent crab"),
+                            String::from("Thus, we will start from the beginning."),
+                        ],
+                        instructions,
+                    ]
+                    .into_iter()
+                    .flatten()
+                    .collect::<Vec<_>>(),
+                    self.state.clone(),
+                );
+            }
+            Puzzle::Tile2 => {}
+            Puzzle::Riddle => {}
+            Puzzle::Maze => {
+                let next = WordMatch::new("CRAB", Some(Duration::from_mins(1)))?;
+                let instructions = next.instructions();
+                let puzzle = Rc::new(RefCell::new(next));
+
+                self.active_puzzle = Puzzle::Tile1;
+                self.puzzle = puzzle;
+                self.chatbox = ChatBox::new(
+                    &[
+                        vec![
+                            String::from("Unfortunately, we were unable to reach the end in time."),
+                            String::from("I am incredibly disappointed."),
+                            String::from("Then again, I am proud of your effort."),
+                            String::from("Luckily for you, I am a benevolent crab"),
+                            String::from("Thus, we will start from the beginning."),
+                        ],
+                        instructions,
+                    ]
+                    .into_iter()
+                    .flatten()
+                    .collect::<Vec<_>>(),
+                    self.state.clone(),
+                );
+                self.results.clear();
+            }
+            _ => unimplemented!(),
+        }
+
+        self.failures.add_assign(1);
+
+        Ok(())
     }
 }
