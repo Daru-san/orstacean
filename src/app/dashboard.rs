@@ -24,11 +24,26 @@ pub enum Stage {
     PuzzleIntro,
 }
 
-impl Default for Dashboard {
-    fn default() -> Self {
-        Self {
-            chatbox: ChatBox::default(),
-            stage: Stage::Greeting,
+fn age_suffix(age: u8) -> &'static str {
+    match age {
+        0 => unreachable!(),
+        1 => "st",
+        2 => "nd",
+        3 => "rd",
+        4..=20 | 104..=120 | 204..=220 => "th",
+        _ => {
+            let n = age.to_string();
+            let Some(last_digit) = n.chars().last() else {
+                return "th";
+            };
+
+            match last_digit {
+                '1' => "st",
+                '2' => "nd",
+                '3' => "rd",
+                '0' | '4'..='9' => "th",
+                _ => unreachable!(),
+            }
         }
     }
 }
