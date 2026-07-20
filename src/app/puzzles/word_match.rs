@@ -24,7 +24,7 @@ use crate::app::puzzles::IPuzzle;
 
 type PaneMap = BTreeMap<PaneId, (char, Color)>;
 
-pub struct PaneGrid {
+pub struct WordMatch {
     word: &'static str,
     panes: PaneMap,
     layout: Hypertile,
@@ -32,7 +32,7 @@ pub struct PaneGrid {
     completed: bool,
 }
 
-impl PaneGrid {
+impl WordMatch {
     pub fn new(word: &'static str) -> color_eyre::Result<Self> {
         let mut layout = Hypertile::new();
 
@@ -92,7 +92,7 @@ impl PaneGrid {
     }
 }
 
-impl IPuzzle for PaneGrid {
+impl IPuzzle for WordMatch {
     fn render(&mut self, frame: &mut Frame, area: Rect) {
         frame.render_stateful_widget(
             HypertileWidget::new(|pane, buf| render_pane(pane, buf, &self.panes)),
