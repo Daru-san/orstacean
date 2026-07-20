@@ -26,7 +26,7 @@
         in
         {
           packages.default = pkgs.rustPlatform.buildRustPackage {
-            pname = "origin.crab";
+            pname = "orstacean";
             version = "0.1";
             src = fs.toSource {
               root = ./.;
@@ -58,7 +58,7 @@
 
             meta = {
               maintainers = [ lib.maintainers.Daru-san ];
-              mainProgram = "origin";
+              mainProgram = "orstacean";
               license = lib.licenses.bsd3;
             };
           };
