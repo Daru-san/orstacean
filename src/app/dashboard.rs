@@ -85,6 +85,14 @@ impl Dashboard {
         let [main_area, bottom_area] = main_area.layout(&layout);
 
         let help = Line::from(vec![
+            Span::styled("-", Style::default().add_modifier(Modifier::BOLD)),
+            Span::styled(
+                format!("V: {:.2}%  ", self.volume.get() * 100.),
+                Style::default()
+                    .add_modifier(Modifier::UNDERLINED)
+                    .fg(Color::LightBlue),
+            ),
+            Span::styled("+   ", Style::default().add_modifier(Modifier::BOLD)),
             Span::styled("Ctrl-Q", Style::default().add_modifier(Modifier::BOLD)),
             Span::raw(": quit  "),
             Span::styled("Ctrl-R", Style::default().add_modifier(Modifier::BOLD)),

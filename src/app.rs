@@ -76,9 +76,9 @@ impl App {
                 update: true,
                 splash_screen: SplashScreen::new(SPLASH_CONFIG)?,
             },
-            input_form: InputForm::new(),
+            input_form: InputForm::new(volume.clone()),
             confirm_state: None,
-            dashboard: Dashboard::default(),
+            dashboard: Dashboard::new(mixer.clone(), volume.clone()),
             puzzle_view: PuzzleView::new(),
             start_playback,
             mixer,
@@ -225,7 +225,7 @@ impl App {
             }
             State::Quit => {}
             State::Reset => {
-                self.input_form = InputForm::new();
+                self.input_form = InputForm::new(self.volume.clone());
                 self.state = State::Input;
             }
         }
