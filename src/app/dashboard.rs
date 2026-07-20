@@ -18,7 +18,7 @@ pub struct Dashboard {
     volume: Rc<Cell<f32>>,
 }
 
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum Stage {
     Greeting,
     PuzzleIntro,
