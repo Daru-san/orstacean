@@ -1,4 +1,5 @@
-use std::cell::Cell;
+use std::cell::{Cell, RefCell};
+use std::io::{BufReader, Cursor};
 use std::rc::Rc;
 use std::time::Duration;
 
@@ -18,7 +19,7 @@ use tui_spinner::RectSpinner;
 use crate::app::dashboard::{Dashboard, Stage};
 use crate::app::input::InputForm;
 use crate::app::puzzles::PuzzleView;
-use crate::{APP_NAME, PlaybackCallback, Track};
+use crate::{APP_NAME, Track};
 
 mod chat_box;
 mod dashboard;
@@ -56,19 +57,93 @@ pub struct App {
     confirm_state: Option<State>,
     dashboard: Dashboard,
     puzzle_view: PuzzleView,
-    start_playback: Box<PlaybackCallback>,
+    app_state: AppState,
+}
+
+#[derive(Clone)]
+pub struct AppState {
     mixer: rodio::mixer::Mixer,
-    sink: Option<rodio::Sink>,
     volume: Rc<Cell<f32>>,
-    current_track: Track,
+    current_track: Rc<Cell<Track>>,
+    sink: Rc<RefCell<Option<rodio::Sink>>>,
+}
+
+impl AppState {
+    pub fn change_track(&self, track: Track) -> color_eyre::Result<()> {
+        let reader = BufReader::new(Cursor::new(match track {
+            Track::Lobby => include_bytes!("../assets/slow-walk.ogg").as_slice(),
+            Track::Struggle => include_bytes!("../assets/anticipation.ogg").as_slice(),
+            Track::Success => include_bytes!("../assets/satisfactory.ogg").as_slice(),
+            Track::Failure => include_bytes!("../assets/reconsider.ogg").as_slice(),
+        }));
+
+        let mut sink = self.sink.borrow_mut();
+
+        if let Some(sink) = sink.as_mut() {
+            *sink = rodio::play(&self.mixer, reader)?;
+            sink.set_volume(self.volume.get());
+        } else {
+            sink.replace(rodio::play(&self.mixer, reader)?);
+            if let Some(sink) = sink.as_mut() {
+                sink.set_volume(self.volume.get());
+            }
+        }
+
+        self.current_track.set(track);
+
+        Ok(())
+    }
+
+    pub fn check_and_restart_current_track(&self) -> color_eyre::Result<()> {
+        if let Some(sink) = self.sink.borrow_mut().as_mut() {
+            if sink.is_paused() {
+                self.change_track(self.current_track.get())?;
+            }
+        } else {
+            self.change_track(self.current_track.get())?;
+        }
+
+        Ok(())
+    }
+
+    pub fn set_volume(&self, volume: f32) {
+        if let Some(sink) = self.sink.borrow().as_ref() {
+            sink.set_volume(volume);
+        }
+        self.volume.set(volume);
+    }
+
+    pub fn volume_hints(&self) -> [Span<'_>; 3] {
+        [
+            Span::styled("-", Style::default().add_modifier(Modifier::BOLD)),
+            Span::styled(
+                format!("V: {:.2}%  ", self.volume.get() * 100.),
+                Style::default()
+                    .add_modifier(Modifier::UNDERLINED)
+                    .fg(Color::LightBlue),
+            ),
+            Span::styled("+   ", Style::default().add_modifier(Modifier::BOLD)),
+        ]
+    }
+
+    pub fn volume(&self) -> f32 {
+        self.volume.get()
+    }
+
+    pub fn mixer(&self) -> &rodio::mixer::Mixer {
+        &self.mixer
+    }
 }
 
 impl App {
-    pub fn new(
-        start_playback: Box<PlaybackCallback>,
-        mixer: rodio::mixer::Mixer,
-    ) -> color_eyre::Result<Self> {
+    pub fn new(mixer: rodio::mixer::Mixer) -> color_eyre::Result<Self> {
         let volume = Rc::new(Cell::new(0.5));
+        let app_state = AppState {
+            mixer,
+            volume,
+            current_track: Rc::new(Cell::new(Track::Lobby)),
+            sink: Default::default(),
+        };
         Ok(Self {
             state: State::Loading,
             progress_form: ProgressForm {
@@ -77,15 +152,11 @@ impl App {
                 update: true,
                 splash_screen: SplashScreen::new(SPLASH_CONFIG)?,
             },
-            input_form: InputForm::new(volume.clone()),
+            input_form: InputForm::new(app_state.clone()),
             confirm_state: None,
-            dashboard: Dashboard::new(mixer.clone(), volume.clone()),
+            dashboard: Dashboard::new(app_state.clone()),
             puzzle_view: PuzzleView::new(),
-            start_playback,
-            mixer,
-            sink: None,
-            volume,
-            current_track: Track::Lobby,
+            app_state,
         })
     }
 
@@ -180,19 +251,8 @@ impl App {
     }
 
     fn update(&mut self, terminal_width: u16) -> color_eyre::Result<()> {
-        if !matches!(self.state, State::Loading)
-            && self
-                .sink
-                .as_ref()
-                .is_none_or(|sink| sink.is_paused() || sink.empty())
-        {
-            let start = &mut self.start_playback;
-            start(
-                &mut self.sink,
-                &self.mixer,
-                self.volume.get(),
-                self.current_track,
-            )?;
+        if !matches!(self.state, State::Loading) {
+            self.app_state.check_and_restart_current_track()?;
         }
         match self.state {
             State::Loading => {
@@ -206,14 +266,7 @@ impl App {
                 if self.progress_form.value >= 1. {
                     self.state = State::Dashboard(Stage::Greeting);
                     self.dashboard.greet();
-                    let start_playback = &mut self.start_playback;
-                    start_playback(
-                        &mut self.sink,
-                        &self.mixer,
-                        self.volume.get(),
-                        crate::Track::Lobby,
-                    )?;
-                    self.current_track = Track::Lobby;
+                    self.app_state.change_track(Track::Lobby)?;
                 }
             }
             State::Input => {
@@ -238,7 +291,7 @@ impl App {
             }
             State::Quit => {}
             State::Reset => {
-                self.input_form = InputForm::new(self.volume.clone());
+                self.input_form = InputForm::new(self.app_state.clone());
                 self.state = State::Input;
             }
         }
@@ -287,16 +340,14 @@ impl App {
                 return Ok(());
             }
 
-            if let Some(ref mut sink) = self.sink {
-                if matches!(key.code, KeyCode::Char('-')) && key.modifiers.is_empty() {
-                    sink.set_volume((sink.volume() - 0.05).clamp(0.0, 1.0));
-                    self.volume.set(sink.volume());
-                }
+            if matches!(key.code, KeyCode::Char('-')) && key.modifiers.is_empty() {
+                self.app_state
+                    .set_volume((self.app_state.volume() - 0.05).clamp(0.0, 1.0));
+            }
 
-                if matches!(key.code, KeyCode::Char('+')) && key.modifiers.is_empty() {
-                    sink.set_volume((sink.volume() + 0.05).clamp(0.0, 1.0));
-                    self.volume.set(sink.volume());
-                }
+            if matches!(key.code, KeyCode::Char('+')) && key.modifiers.is_empty() {
+                self.app_state
+                    .set_volume((self.app_state.volume() + 0.05).clamp(0.0, 1.0));
             }
 
             if matches!(key.code, KeyCode::Char('r'))

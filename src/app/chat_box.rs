@@ -1,6 +1,5 @@
-use std::cell::{Cell, LazyCell};
+use std::cell::LazyCell;
 use std::io::{BufReader, Cursor};
-use std::rc::Rc;
 use std::time::{Duration, Instant};
 
 use crossterm::event::{self, KeyCode};
@@ -10,6 +9,8 @@ use ratatui::{Frame, layout::Rect, widgets::Block};
 use rodio::Source;
 use rodio::buffer::SamplesBuffer;
 use tui_scrollview::{ScrollView, ScrollViewState};
+
+use crate::app::AppState;
 
 thread_local! {
     static SAMPLE: LazyCell<SamplesBuffer> = LazyCell::new(||{
@@ -35,7 +36,7 @@ pub struct ChatBox {
     pause_start: Option<Instant>,
     scroll_state: ScrollViewState,
     playback_sink: rodio::Sink,
-    volume: Rc<Cell<f32>>,
+    state: AppState,
 }
 
 fn message_height(text: &str, inner_width: u16) -> u16 {
@@ -44,8 +45,8 @@ fn message_height(text: &str, inner_width: u16) -> u16 {
 }
 
 impl ChatBox {
-    pub fn new(text: &[String], mixer: rodio::mixer::Mixer, volume: Rc<Cell<f32>>) -> Self {
-        let playback_sink = rodio::Sink::connect_new(&mixer);
+    pub fn new(text: &[String], state: AppState) -> Self {
+        let playback_sink = rodio::Sink::connect_new(&state.mixer());
 
         Self {
             messages: text.to_vec(),
@@ -57,7 +58,7 @@ impl ChatBox {
             pause_start: None,
             scroll_state: ScrollViewState::new(),
             playback_sink,
-            volume,
+            state,
         }
     }
 
@@ -101,7 +102,7 @@ impl ChatBox {
     pub fn update(&mut self) -> color_eyre::Result<bool> {
         self.tick()?;
 
-        self.playback_sink.set_volume(self.volume.get());
+        self.playback_sink.set_volume(self.state.volume());
 
         Ok(self.done())
     }

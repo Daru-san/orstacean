@@ -2,11 +2,9 @@
 #![allow(clippy::pedantic)]
 #![allow(clippy::expect_used)]
 
-use std::cell::Cell;
 use std::fmt::Display;
 use std::marker::PhantomData;
 use std::num::{ParseFloatError, ParseIntError};
-use std::rc::Rc;
 use std::str::FromStr;
 
 use crossterm::event::{self, KeyCode, KeyEvent, KeyModifiers};
@@ -22,10 +20,11 @@ use ratatui_form::{Field, Form, FormStyle, ValidationError, Validator};
 use unicode_width::UnicodeWidthStr;
 
 use crate::APP_NAME;
+use crate::app::AppState;
 
 pub struct InputForm {
     form: Form,
-    volume: Rc<Cell<f32>>,
+    state: AppState,
 }
 
 pub struct InputResult {
@@ -34,7 +33,7 @@ pub struct InputResult {
 }
 
 impl InputForm {
-    pub fn new(volume: Rc<Cell<f32>>) -> Self {
+    pub fn new(state: AppState) -> Self {
         let form = ratatui_form::FormBuilder::new()
             .title("Introduce yourself")
             .text("name", "Name")
@@ -54,7 +53,7 @@ impl InputForm {
             ))
             .build();
 
-        Self { form, volume }
+        Self { form, state }
     }
 
     pub fn update(&mut self) -> Option<InputResult> {
@@ -114,15 +113,8 @@ impl InputForm {
             .slow_blink()
             .render(header_area, frame.buffer_mut());
 
-        let help = Line::from(vec![
-            Span::styled("-", Style::default().add_modifier(Modifier::BOLD)),
-            Span::styled(
-                format!("V: {:.2}%  ", self.volume.get() * 100.),
-                Style::default()
-                    .add_modifier(Modifier::UNDERLINED)
-                    .fg(Color::LightBlue),
-            ),
-            Span::styled("+   ", Style::default().add_modifier(Modifier::BOLD)),
+        let mut parts = Vec::from_iter(self.state.volume_hints());
+        parts.extend([
             Span::styled("Tab", Style::default().add_modifier(Modifier::BOLD)),
             Span::raw(": next  "),
             Span::styled("Shift-Tab", Style::default().add_modifier(Modifier::BOLD)),
@@ -140,6 +132,8 @@ impl InputForm {
             Span::styled("Ctrl-Q", Style::default().add_modifier(Modifier::BOLD)),
             Span::raw(": quit  "),
         ]);
+
+        let help = Line::from(parts);
 
         frame
             .buffer_mut()

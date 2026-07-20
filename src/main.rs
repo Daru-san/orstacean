@@ -1,4 +1,3 @@
-use std::io::{BufReader, Cursor};
 
 use crate::app::App;
 
@@ -32,31 +31,7 @@ pub fn run() -> color_eyre::Result<()> {
     let stream_handle = rodio::OutputStreamBuilder::open_default_stream()?;
     let mixer = stream_handle.mixer();
 
-    let start_playback: Box<PlaybackCallback> = Box::new(|sink, mixer, volume, track| {
-        let reader = BufReader::new(Cursor::new(match track {
-            Track::Lobby => include_bytes!("../assets/slow-walk.ogg").as_slice(),
-            Track::Struggle => include_bytes!("../assets/anticipation.ogg").as_slice(),
-            Track::Success => include_bytes!("../assets/satisfactory.ogg").as_slice(),
-            Track::Failure => include_bytes!("../assets/reconsider.ogg").as_slice(),
-        }));
-
-        match sink {
-            Some(sink) => {
-                *sink = rodio::play(mixer, reader)?;
-                sink.set_volume(volume);
-            }
-            None => {
-                sink.replace(rodio::play(mixer, reader)?);
-                if let Some(sink) = sink {
-                    sink.set_volume(volume);
-                }
-            }
-        }
-
-        Ok(())
-    });
-
-    let app = App::new(start_playback, mixer.clone())?;
+    let app = App::new(mixer.clone())?;
 
     app.run(&mut terminal)
 }

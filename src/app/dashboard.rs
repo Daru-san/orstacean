@@ -1,21 +1,19 @@
-use std::cell::Cell;
-use std::rc::Rc;
 
 use ratatui::layout::Constraint::{Length, Min, Percentage};
 use ratatui::layout::Layout;
-use ratatui::style::{Color, Modifier, Style, Stylize};
+use ratatui::style::{Modifier, Style, Stylize};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Paragraph, Widget};
 use ratatui::{Frame, widgets::Block};
 
 use crate::APP_NAME;
+use crate::app::AppState;
 use crate::app::chat_box::ChatBox;
 
 pub struct Dashboard {
     chatbox: ChatBox,
     stage: Stage,
-    mixer: rodio::mixer::Mixer,
-    volume: Rc<Cell<f32>>,
+    state: AppState,
 }
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
@@ -49,12 +47,11 @@ fn age_suffix(age: u8) -> &'static str {
 }
 
 impl Dashboard {
-    pub fn new(mixer: rodio::mixer::Mixer, volume: Rc<Cell<f32>>) -> Self {
+    pub fn new(state: AppState) -> Self {
         Self {
-            chatbox: ChatBox::new(&[], mixer.clone(), volume.clone()),
-            mixer,
+            chatbox: ChatBox::new(&[], state.clone()),
             stage: Stage::Greeting,
-            volume,
+            state,
         }
     }
     pub fn introduce_puzzles(&mut self, name: impl AsRef<str>, age: u8) {
@@ -82,8 +79,7 @@ impl Dashboard {
                 String::from("You will be taken to puzzle number #1."),
                 String::from("準備はできたか？"),
             ],
-            self.mixer.clone(),
-            self.volume.clone(),
+            self.state.clone(),
         );
     }
 
@@ -101,8 +97,7 @@ impl Dashboard {
                 String::from("Enough about me."),
                 String::from("Why don't you introduce yourself?"),
             ],
-            self.mixer.clone(),
-            self.volume.clone(),
+            self.state.clone(),
         );
     }
 
@@ -123,15 +118,8 @@ impl Dashboard {
         let layout = Layout::vertical([Percentage(100), Min(1)]);
         let [main_area, bottom_area] = main_area.layout(&layout);
 
-        let help = Line::from(vec![
-            Span::styled("-", Style::default().add_modifier(Modifier::BOLD)),
-            Span::styled(
-                format!("V: {:.2}%  ", self.volume.get() * 100.),
-                Style::default()
-                    .add_modifier(Modifier::UNDERLINED)
-                    .fg(Color::LightBlue),
-            ),
-            Span::styled("+   ", Style::default().add_modifier(Modifier::BOLD)),
+        let mut parts = Vec::from_iter(self.state.volume_hints());
+        parts.extend([
             Span::styled("Ctrl-Q", Style::default().add_modifier(Modifier::BOLD)),
             Span::raw(": quit  "),
             Span::styled("Ctrl-R", Style::default().add_modifier(Modifier::BOLD)),
@@ -145,6 +133,8 @@ impl Dashboard {
             Span::styled("L or ►", Style::default().add_modifier(Modifier::BOLD)),
             Span::raw(": down  "),
         ]);
+
+        let help = Line::from_iter(parts);
 
         help.render(bottom_area, buf);
 
