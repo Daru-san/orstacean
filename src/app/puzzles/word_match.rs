@@ -82,9 +82,10 @@ impl PaneGrid {
 
     fn check_sorted(&self) -> bool {
         let word = self
-            .panes
-            .iter()
-            .map(|(_, (char, _))| *char)
+            .layout
+            .panes()
+            .into_iter()
+            .filter_map(|pane| self.panes.get(&pane.id).copied().map(|pane| pane.0))
             .collect::<String>();
 
         word.eq(&self.word)
