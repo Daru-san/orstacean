@@ -1,14 +1,30 @@
+use std::cell::{Cell, LazyCell};
+use std::io::{BufReader, Cursor};
+use std::rc::Rc;
 use std::time::{Duration, Instant};
 
 use crossterm::event::{self, KeyCode};
-use ratatui::layout::{Constraint, Layout, Size};
-use ratatui::widgets::{Paragraph, StatefulWidget, Widget, Wrap};
+use ratatui::layout::Size;
+use ratatui::widgets::{Paragraph, Wrap};
 use ratatui::{Frame, layout::Rect, widgets::Block};
+use rodio::Source;
+use rodio::buffer::SamplesBuffer;
 use tui_scrollview::{ScrollView, ScrollViewState};
 
-const SCROLLVIEW_HEIGHT: u16 = 100;
+thread_local! {
+    static SAMPLE: LazyCell<SamplesBuffer> = LazyCell::new(||{
+        let data = BufReader::new(Cursor::new(
+            include_bytes!("../../assets/word.ogg").as_slice(),
+        ));
+        let decoder = rodio::Decoder::new_vorbis(data).expect("Failure");
+        let channels = decoder.channels();
+        let sample_rate = decoder.sample_rate();
+        let samples: Vec<f32> = decoder.collect();
 
-#[derive(Debug)]
+        SamplesBuffer::new(channels, sample_rate, samples)
+    });
+}
+
 pub struct ChatBox {
     messages: Vec<String>,
     current_message: usize,
@@ -18,6 +34,8 @@ pub struct ChatBox {
     msg_pause: Duration,
     pause_start: Option<Instant>,
     scroll_state: ScrollViewState,
+    playback_sink: rodio::Sink,
+    volume: Rc<Cell<f32>>,
 }
 
 impl Default for ChatBox {
@@ -36,7 +54,9 @@ impl Default for ChatBox {
 }
 
 impl ChatBox {
-    pub fn new(text: &[String]) -> Self {
+    pub fn new(text: &[String], mixer: rodio::mixer::Mixer, volume: Rc<Cell<f32>>) -> Self {
+        let playback_sink = rodio::Sink::connect_new(&mixer);
+
         Self {
             messages: text.to_vec(),
             current_message: 0,
@@ -46,6 +66,8 @@ impl ChatBox {
             msg_pause: Duration::from_millis(400),
             pause_start: None,
             scroll_state: ScrollViewState::new(),
+            playback_sink,
+            volume,
         }
     }
 
@@ -91,7 +113,9 @@ impl ChatBox {
     }
 
     pub fn update(&mut self) -> color_eyre::Result<bool> {
-        self.tick();
+        self.tick()?;
+
+        self.playback_sink.set_volume(self.volume.get());
 
         Ok(self.done())
     }
@@ -111,13 +135,13 @@ impl ChatBox {
         Ok(())
     }
 
-    pub fn tick(&mut self) {
+    pub fn tick(&mut self) -> color_eyre::Result<()> {
         if self.done() {
-            return;
-        };
+            return Ok(());
+        }
 
         let Some(current) = self.messages.get(self.current_message) else {
-            return;
+            return Ok(());
         };
 
         let total_chars = current.chars().count();
@@ -125,6 +149,7 @@ impl ChatBox {
         if self.revealed_chars >= total_chars {
             match self.pause_start {
                 None => {
+                    self.playback_sink.stop();
                     self.pause_start.replace(Instant::now());
                 }
                 Some(instant) => {
@@ -135,12 +160,21 @@ impl ChatBox {
                     }
                 }
             }
-            return;
+            return Ok(());
         }
 
         if self.last_tick.elapsed() >= self.char_delay {
             self.revealed_chars += 1;
             self.last_tick = Instant::now();
+
+            let char = current.chars().nth(self.revealed_chars);
+
+            if char.is_some_and(|char| char != ' ') {
+                let buffer = SAMPLE.with(|samples| (*samples).clone());
+                self.playback_sink.clear();
+                self.playback_sink.append(buffer);
+                self.playback_sink.play();
+            }
         }
     }
 
