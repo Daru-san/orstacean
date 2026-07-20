@@ -89,7 +89,6 @@ impl Maze {
 
     fn timedout(&self) -> bool {
         self.timer.done()
-        let now = Instant::now();
     }
 }
 
