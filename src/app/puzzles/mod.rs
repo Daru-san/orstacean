@@ -29,10 +29,10 @@ pub struct PuzzleView {
 }
 
 enum Puzzle {
-    Tile1(Rc<RefCell<PaneGrid>>),
-    Tile2(Rc<RefCell<PaneGrid>>),
+    Tile1,
+    Tile2,
     Riddle,
-    Maze(Rc<RefCell<Maze>>),
+    Maze,
     Cipher,
 }
 
