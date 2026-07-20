@@ -42,3 +42,7 @@ codegen-units = 1
 opt-level = 3
 panic = "abort"
 strip = "symbols"
+
+[profile.dist]
+inherits = "release"
+lto = "thin"
