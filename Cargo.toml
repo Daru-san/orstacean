@@ -28,6 +28,7 @@ ratatui-splash-screen = { version = "0.1.5", features = ["png", "jpeg"] }
 ratatui-textarea = "0.9.2"
 rodio = "0.21.1"
 serde_json = "1.0.150"
+throbber-widgets-tui = "0.11.1"
 tui-popup = "0.7.6"
 tui-scrollview = "0.6.7"
 tui-spinner = "0.4.0"
