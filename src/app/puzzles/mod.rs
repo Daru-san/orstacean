@@ -56,5 +56,17 @@ impl PuzzleView {
         let help = puzzle.keys_hints();
 
         help.render(bottom_area, frame.buffer_mut());
+
+        puzzle.render(frame, main_area);
+    }
+
+    pub fn handle_events(&mut self) -> color_eyre::Result<()> {
+        let mut puzzle = self.puzzle.borrow_mut();
+        puzzle.handle_events()
+    }
+
+    pub fn update(&mut self) -> color_eyre::Result<()> {
+        let mut puzzle = self.puzzle.borrow_mut();
+        Ok(puzzle.update())
     }
 }

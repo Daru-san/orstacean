@@ -4,7 +4,6 @@ use std::rc::Rc;
 use std::time::Duration;
 
 use crossterm::event::{self, KeyCode, KeyEvent, KeyModifiers};
-use num_traits::Float;
 use ratatui::DefaultTerminal;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Constraint::{Length, Min, Percentage};
@@ -276,7 +275,9 @@ impl App {
                     self.state = State::Dashboard(Stage::PuzzleIntro);
                 }
             }
-            State::Ready => {}
+            State::Ready => {
+                self.puzzle_view.update()?;
+            }
             State::Dashboard(stage) => {
                 if self.dashboard.update()? {
                     match stage {
@@ -370,7 +371,9 @@ impl App {
                 }
                 State::Quit => {}
                 State::Reset => {}
-                State::Ready => {}
+                State::Ready => {
+                    self.puzzle_view.handle_events()?;
+                }
             }
         }
 
