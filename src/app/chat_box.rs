@@ -166,11 +166,11 @@ impl ChatBox {
         Ok(())
     }
 
-    pub fn done(&self) -> bool {
+    pub const fn done(&self) -> bool {
         self.messages.len() <= self.current_message
     }
 }
 
 fn block<'a>() -> Block<'a> {
-    Block::bordered().title("🦀 Ferris")
+    Block::bordered().title("🦀 King")
 }

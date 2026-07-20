@@ -92,8 +92,7 @@ impl Dashboard {
         self.chatbox = ChatBox::new(
             &[
                 format!("Welcome to {APP_NAME}."),
-                String::from("My name is Ferris."),
-                String::from("You may already know me as the Rust mascot."),
+                String::from("My name is King."),
                 String::from("As you can see, I am a crab."),
                 String::from("You shall join our kind soon enough."),
                 String::from("Let's start simple. Why don't you introduce yourself?"),
