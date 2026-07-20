@@ -99,7 +99,7 @@ impl Maze {
                     continue;
                 }
                 let (symbol, style) = if (x as u16, y as u16) == (self.player.x, self.player.y) {
-                    ("@", Style::default().fg(Color::Yellow))
+                    ("🦀", Style::default().fg(Color::Yellow))
                 } else if ch == '#' {
                     ("█", Style::default().fg(Color::DarkGray))
                 } else if ch == GOAL {
