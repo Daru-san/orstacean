@@ -81,9 +81,8 @@ impl PuzzleView {
 
         let mut puzzle = self.puzzle.borrow_mut();
 
-        let volume = self.state.volume_hints();
-        let mut help = puzzle.keys_hints();
-        help.extend(volume);
+        let mut help = Line::from_iter(self.state.volume_hints());
+        help.extend(puzzle.keys_hints());
         help.extend([
             Span::styled("?", Style::default().add_modifier(Modifier::BOLD)),
             Span::raw(": help  "),
