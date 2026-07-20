@@ -3,6 +3,12 @@ name = "orstacean"
 version = "0.1.0"
 edition = "2024"
 
+[package.metadata.wix]
+upgrade-guid = "A39ECE4A-B53A-4C94-958B-0B4A9A996644"
+path-guid = "A9491D97-2AFB-47DF-973F-8690AF293BE2"
+license = false
+eula = false
+
 [dependencies]
 clap = "4.6.2"
 color-eyre = "0.6.5"
