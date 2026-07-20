@@ -70,6 +70,7 @@
               rustc
               rustfmt
               chafa
+              cargo-dist
               pkg-config
               glib
               wild
