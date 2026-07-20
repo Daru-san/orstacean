@@ -49,6 +49,7 @@
 
             nativeBuildInputs = with pkgs; [
               pkg-config
+              wild
             ];
 
             buildInputs = with pkgs; [
@@ -70,6 +71,7 @@
               chafa
               pkg-config
               glib
+              wild
               clippy
             ];
             RUST_SRC_PATH = pkgs.rustPlatform.rustLibSrc;
