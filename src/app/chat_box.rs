@@ -162,6 +162,8 @@ impl ChatBox {
                 self.playback_sink.play();
             }
         }
+
+        Ok(())
     }
 
     pub fn done(&self) -> bool {
