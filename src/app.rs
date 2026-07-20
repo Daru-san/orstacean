@@ -1,6 +1,9 @@
+use std::cell::Cell;
+use std::rc::Rc;
 use std::time::Duration;
 
 use crossterm::event::{self, KeyCode, KeyEvent, KeyModifiers};
+use num_traits::Float;
 use ratatui::DefaultTerminal;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Constraint::{Length, Min, Percentage};
@@ -15,6 +18,7 @@ use tui_spinner::RectSpinner;
 use crate::app::dashboard::{Dashboard, Stage};
 use crate::app::input::InputForm;
 use crate::app::puzzles::PuzzleView;
+use crate::{APP_NAME, PlaybackCallback};
 
 mod chat_box;
 mod dashboard;
@@ -52,10 +56,18 @@ pub struct App {
     confirm_state: Option<State>,
     dashboard: Dashboard,
     puzzle_view: PuzzleView,
+    start_playback: Box<PlaybackCallback>,
+    mixer: rodio::mixer::Mixer,
+    sink: Option<rodio::Sink>,
+    volume: Rc<Cell<f32>>,
 }
 
 impl App {
-    pub fn new() -> color_eyre::Result<Self> {
+    pub fn new(
+        start_playback: Box<PlaybackCallback>,
+        mixer: rodio::mixer::Mixer,
+    ) -> color_eyre::Result<Self> {
+        let volume = Rc::new(Cell::new(0.5));
         Ok(Self {
             state: State::Loading,
             progress_form: ProgressForm {
@@ -68,6 +80,10 @@ impl App {
             confirm_state: None,
             dashboard: Dashboard::default(),
             puzzle_view: PuzzleView::new(),
+            start_playback,
+            mixer,
+            sink: None,
+            volume,
         })
     }
 
@@ -162,6 +178,15 @@ impl App {
     }
 
     fn update(&mut self, terminal_width: u16) -> color_eyre::Result<()> {
+        if !matches!(self.state, State::Loading)
+            && self
+                .sink
+                .as_ref()
+                .is_none_or(|sink| sink.is_paused() || sink.empty())
+        {
+            let start = &mut self.start_playback;
+            start(&mut self.sink, &self.mixer, self.volume.get())?;
+        }
         match self.state {
             State::Loading => {
                 if self.progress_form.update {
@@ -173,7 +198,9 @@ impl App {
 
                 if self.progress_form.value >= 1. {
                     self.state = State::Dashboard(Stage::Greeting);
-                    self.dashboard.greet();
+                    self.dashboard.greet()?;
+                    let start_playback = &mut self.start_playback;
+                    start_playback(&mut self.sink, &self.mixer, self.volume.get())?;
                 }
             }
             State::Input => {
@@ -245,6 +272,18 @@ impl App {
             {
                 self.confirm_state.replace(State::Quit);
                 return Ok(());
+            }
+
+            if let Some(ref mut sink) = self.sink {
+                if matches!(key.code, KeyCode::Char('-')) && key.modifiers.is_empty() {
+                    sink.set_volume((sink.volume() - 0.05).clamp(0.0, 1.0));
+                    self.volume.set(sink.volume());
+                }
+
+                if matches!(key.code, KeyCode::Char('+')) && key.modifiers.is_empty() {
+                    sink.set_volume((sink.volume() + 0.05).clamp(0.0, 1.0));
+                    self.volume.set(sink.volume());
+                }
             }
 
             if matches!(key.code, KeyCode::Char('r'))
