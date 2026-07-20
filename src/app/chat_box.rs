@@ -52,7 +52,7 @@ impl ChatBox {
             current_message: 0,
             revealed_chars: 0,
             last_tick: Instant::now(),
-            char_delay: Duration::from_millis(50),
+            char_delay: Duration::from_millis(60),
             msg_pause: Duration::from_millis(400),
             pause_start: None,
             scroll_state: ScrollViewState::new(),
