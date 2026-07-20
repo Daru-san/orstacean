@@ -18,7 +18,7 @@ use tui_spinner::RectSpinner;
 use crate::app::dashboard::{Dashboard, Stage};
 use crate::app::input::InputForm;
 use crate::app::puzzles::PuzzleView;
-use crate::{APP_NAME, PlaybackCallback};
+use crate::{APP_NAME, PlaybackCallback, Track};
 
 mod chat_box;
 mod dashboard;
@@ -60,6 +60,7 @@ pub struct App {
     mixer: rodio::mixer::Mixer,
     sink: Option<rodio::Sink>,
     volume: Rc<Cell<f32>>,
+    current_track: Track,
 }
 
 impl App {
@@ -84,6 +85,7 @@ impl App {
             mixer,
             sink: None,
             volume,
+            current_track: Track::Lobby,
         })
     }
 
@@ -185,7 +187,12 @@ impl App {
                 .is_none_or(|sink| sink.is_paused() || sink.empty())
         {
             let start = &mut self.start_playback;
-            start(&mut self.sink, &self.mixer, self.volume.get())?;
+            start(
+                &mut self.sink,
+                &self.mixer,
+                self.volume.get(),
+                self.current_track,
+            )?;
         }
         match self.state {
             State::Loading => {
@@ -200,7 +207,13 @@ impl App {
                     self.state = State::Dashboard(Stage::Greeting);
                     self.dashboard.greet();
                     let start_playback = &mut self.start_playback;
-                    start_playback(&mut self.sink, &self.mixer, self.volume.get())?;
+                    start_playback(
+                        &mut self.sink,
+                        &self.mixer,
+                        self.volume.get(),
+                        crate::Track::Lobby,
+                    )?;
+                    self.current_track = Track::Lobby;
                 }
             }
             State::Input => {
