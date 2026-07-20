@@ -11,21 +11,21 @@ use ratatui::widgets::Widget;
 use tui_popup::Popup;
 
 use crate::app::puzzles::IPuzzle;
+use crate::app::puzzles::timer::Timer;
 
 pub struct Maze {
     grid: Vec<Vec<char>>,
     player: (u16, u16),
-    start: Instant,
-    timeout: Duration,
     completed: bool,
     failed: bool,
+    timer: Timer,
 }
 
 const START: char = 'S';
 const GOAL: char = 'G';
 
 impl Maze {
-    pub fn new() -> Maze {
+    pub fn new(timeout: Duration) -> Maze {
         let maze = OrthogonalMazeBuilder::new().width(840).height(480).build();
 
         let ascii = maze
@@ -46,8 +46,7 @@ impl Maze {
         Self {
             grid,
             player: (0, 0),
-            start: Instant::now(),
-            timeout: Duration::from_mins(5),
+            timer: Timer::new(timeout),
             completed: false,
             failed: false,
         }
@@ -89,15 +88,19 @@ impl Maze {
     }
 
     fn timedout(&self) -> bool {
+        self.timer.done()
         let now = Instant::now();
-        now.duration_since(self.start) >= self.timeout
     }
 }
 
 impl IPuzzle for Maze {
     fn render(&mut self, frame: &mut Frame, area: Rect) {
-        //TODO: Add timer
-        self.draw_grid(area, frame.buffer_mut());
+        let layout = Layout::vertical([Percentage(100), Min(1)]);
+        let [main_area, bottom_area] = area.layout(&layout);
+
+        self.timer.render(bottom_area, frame.buffer_mut());
+
+        self.draw_grid(main_area, frame.buffer_mut());
 
         if self.timedout() {
             let mut text = Text::default();
@@ -153,5 +156,11 @@ impl IPuzzle for Maze {
 
     fn instructions(&self) -> Vec<String> {
         vec![]
+    fn completed(&self) -> bool {
+        (!self.timedout()) && (self.player == self.goal)
+    }
+
+    fn failed(&self) -> bool {
+        self.timedout()
     }
 }
