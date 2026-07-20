@@ -21,6 +21,8 @@ use ratatui::widgets::{Block, Paragraph, Widget};
 use ratatui_form::{Field, Form, FormStyle, ValidationError, Validator};
 use unicode_width::UnicodeWidthStr;
 
+use crate::APP_NAME;
+
 pub struct InputForm {
     form: Form,
     volume: Rc<Cell<f32>>,
@@ -105,7 +107,7 @@ impl InputForm {
         let layout = Layout::vertical([Percentage(100), Min(1)]);
         let [main_area, bottom_area] = main_area.layout(&layout);
 
-        Paragraph::new("Origin.Crab")
+        Paragraph::new(format!("{APP_NAME}: Registration"))
             .bold()
             .centered()
             .block(Block::bordered())
