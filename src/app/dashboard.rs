@@ -7,6 +7,7 @@ use ratatui::text::{Line, Span};
 use ratatui::widgets::{Paragraph, StatefulWidget, Widget};
 use ratatui::{Frame, widgets::Block};
 
+use crate::APP_NAME;
 use crate::app::chat_box::ChatBox;
 
 const SCROLLVIEW_HEIGHT: u16 = 100;
@@ -74,7 +75,7 @@ impl Dashboard {
         let layout = Layout::vertical([Length(3), Min(0)]);
         let [header_area, main_area] = area.layout(&layout);
 
-        Paragraph::new("Oricrabby")
+        Paragraph::new(APP_NAME)
             .bold()
             .centered()
             .block(Block::bordered())
