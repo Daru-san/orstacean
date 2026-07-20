@@ -7,10 +7,7 @@ use crossterm::event::KeyModifiers;
 use rand::seq::SliceRandom;
 use ratatui::Frame;
 use ratatui::buffer::Buffer;
-use ratatui::layout::Constraint::Min;
-use ratatui::layout::Constraint::Percentage;
 use ratatui::layout::Direction;
-use ratatui::layout::Layout;
 use ratatui::layout::Rect;
 use ratatui::style::Color;
 use ratatui::style::Modifier;
@@ -36,9 +33,8 @@ pub struct PaneGrid {
 }
 
 impl PaneGrid {
-    pub fn new(word: &'static str) -> Self {
-        let mut panes = PaneMap::from_iter([(PaneId::ROOT, ('%', Color::White))]);
-        let layout = Hypertile::new();
+    pub fn new(word: &'static str) -> color_eyre::Result<Self> {
+        let mut layout = Hypertile::new();
 
         let mut chars: Vec<char> = word.chars().collect();
 
@@ -46,17 +42,38 @@ impl PaneGrid {
         // shuffle chars
         chars.shuffle(&mut rng);
 
-        for (i, c) in chars.into_iter().enumerate() {
-            panes.insert(PaneId::new(i as u64), (c, Color::White));
-        }
+        layout.set_split_policy(ratatui_hypertile::SplitPolicy::Half);
 
-        Self {
+        let mut panes = PaneMap::new();
+
+        let mut leaf_ids: Vec<PaneId> = Vec::new();
+
+        for (i, c) in chars.into_iter().enumerate() {
+            if i == 0 {
+                let id = PaneId::ROOT;
+                leaf_ids.push(PaneId::ROOT);
+                panes.insert(id, (c, Color::White));
+                continue;
+            }
+            let target = leaf_ids[(i - 1) % leaf_ids.len()];
+            loop {
+                layout.apply_action(HypertileAction::FocusPrev);
+                let focused = layout.focused_pane().unwrap();
+                if focused.eq(&target) {
+                    break;
+                }
+            }
+            let new_id = layout.split_focused(Direction::Horizontal)?;
+            leaf_ids.push(new_id);
+            panes.insert(new_id, (c, Color::White));
+        }
+        Ok(Self {
             word,
             layout,
             focused: 0,
             panes,
             completed: false,
-        }
+        })
     }
 
     pub fn completed(&self) -> bool {
