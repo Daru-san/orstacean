@@ -313,24 +313,27 @@ impl App {
         if !event::poll(timeout)? {
             return Ok(());
         }
-        let mut check_state = |key: KeyEvent| -> bool {
+        let mut check_state = |key: KeyEvent| -> color_eyre::Result<bool> {
             if let Some(state) = self.confirm_state
                 && key.modifiers.is_empty()
             {
                 if matches!(key.code, KeyCode::Esc) {
                     self.confirm_state.take();
-                    return true;
+                    return Ok(true);
                 }
                 if matches!(key.code, KeyCode::Enter) {
                     self.confirm_state.take();
                     self.state = state;
-                    return true;
+                    if matches!(state, State::Dashboard(_)) {
+                        self.app_state.change_track(Track::Lobby)?;
+                    }
+                    return Ok(true);
                 }
             }
-            false
+            Ok(false)
         };
         if let Some(key) = event::read()?.as_key_press_event() {
-            if check_state(key) {
+            if check_state(key)? {
                 return Ok(());
             }
             if (matches!(key.code, KeyCode::Char('q')) || matches!(key.code, KeyCode::Char('c')))
