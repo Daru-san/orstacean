@@ -1,4 +1,5 @@
 use std::collections::BTreeMap;
+use std::time::Duration;
 
 use crossterm::event;
 use crossterm::event::Event;
@@ -7,7 +8,10 @@ use crossterm::event::KeyModifiers;
 use rand::seq::SliceRandom;
 use ratatui::Frame;
 use ratatui::buffer::Buffer;
+use ratatui::layout::Constraint::Min;
+use ratatui::layout::Constraint::Percentage;
 use ratatui::layout::Direction;
+use ratatui::layout::Layout;
 use ratatui::layout::Rect;
 use ratatui::style::Color;
 use ratatui::style::Modifier;
@@ -21,6 +25,7 @@ use ratatui_hypertile::HypertileWidget;
 use ratatui_hypertile::{Hypertile, HypertileAction, MoveScope, PaneId, PaneSnapshot, Towards};
 
 use crate::app::puzzles::IPuzzle;
+use crate::app::puzzles::timer::Timer;
 
 type PaneMap = BTreeMap<PaneId, (char, Color)>;
 
@@ -28,12 +33,12 @@ pub struct WordMatch {
     word: &'static str,
     panes: PaneMap,
     layout: Hypertile,
-    focused: usize,
     completed: bool,
+    timeout: Option<Timer>,
 }
 
 impl WordMatch {
-    pub fn new(word: &'static str) -> color_eyre::Result<Self> {
+    pub fn new(word: &'static str, timeout: Option<Duration>) -> color_eyre::Result<Self> {
         let mut layout = Hypertile::new();
 
         let mut chars: Vec<char> = word.chars().collect();
@@ -70,14 +75,10 @@ impl WordMatch {
         Ok(Self {
             word,
             layout,
-            focused: 0,
             panes,
             completed: false,
+            timeout: timeout.map(Timer::new),
         })
-    }
-
-    pub fn completed(&self) -> bool {
-        self.completed
     }
 
     fn check_sorted(&self) -> bool {
@@ -94,13 +95,32 @@ impl WordMatch {
 
 impl IPuzzle for WordMatch {
     fn render(&mut self, frame: &mut Frame, area: Rect) {
-        frame.render_stateful_widget(
-            HypertileWidget::new(|pane, buf| render_pane(pane, buf, &self.panes)),
-            area,
-            &mut self.layout,
-        );
+        if let Some(ref timer) = self.timeout {
+            let layout = Layout::vertical([Percentage(100), Min(1)]);
+            let [main_area, bottom_area] = area.layout(&layout);
+            timer.render(bottom_area, frame.buffer_mut());
+
+            frame.render_stateful_widget(
+                HypertileWidget::new(|pane, buf| render_pane(pane, buf, &self.panes)),
+                main_area,
+                &mut self.layout,
+            );
+        } else {
+            frame.render_stateful_widget(
+                HypertileWidget::new(|pane, buf| render_pane(pane, buf, &self.panes)),
+                area,
+                &mut self.layout,
+            );
+        }
     }
     fn update(&mut self) {}
+
+    fn completed(&self) -> bool {
+        self.check_sorted() && self.completed
+    }
+    fn failed(&self) -> bool {
+        self.completed && !self.check_sorted()
+    }
     fn handle_events(&mut self) -> color_eyre::Result<()> {
         let Event::Key(key) = event::read()? else {
             return Ok(());
@@ -137,12 +157,7 @@ impl IPuzzle for WordMatch {
                 move_pane(&mut self.layout, Direction::Vertical, Towards::End)
             }
             KeyCode::Char('S') if shift => {
-                if self.check_sorted() {
-                    self.completed = true;
-                } else {
-                    panic!("");
-                    // throw error
-                }
+                self.completed = true;
             }
             _ => {}
         }
