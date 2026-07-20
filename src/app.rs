@@ -18,7 +18,7 @@ use tui_spinner::RectSpinner;
 use crate::app::dashboard::{Dashboard, Stage};
 use crate::app::input::InputForm;
 use crate::app::puzzles::PuzzleView;
-use crate::{APP_NAME, Track};
+use crate::{APP_NAME, Track, app};
 
 mod chat_box;
 mod dashboard;
@@ -154,7 +154,7 @@ impl App {
             input_form: InputForm::new(app_state.clone()),
             confirm_state: None,
             dashboard: Dashboard::new(app_state.clone()),
-            puzzle_view: PuzzleView::new(),
+            puzzle_view: PuzzleView::new(app_state.clone())?,
             app_state,
         })
     }
