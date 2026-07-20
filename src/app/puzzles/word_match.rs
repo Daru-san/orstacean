@@ -155,6 +155,8 @@ impl IPuzzle for PaneGrid {
             Span::raw(": quit  "),
             Span::styled("Ctrl-R", Style::default().add_modifier(Modifier::BOLD)),
             Span::raw(": reset  "),
+            Span::styled("S-R", Style::default().add_modifier(Modifier::BOLD)),
+            Span::raw(": submit  "),
             Span::styled("H or ◄", Style::default().add_modifier(Modifier::BOLD)),
             Span::raw(": left  "),
             Span::styled("J or ▲", Style::default().add_modifier(Modifier::BOLD)),
@@ -162,9 +164,9 @@ impl IPuzzle for PaneGrid {
             Span::styled("K or ▼", Style::default().add_modifier(Modifier::BOLD)),
             Span::raw(": down  "),
             Span::styled("L or ►", Style::default().add_modifier(Modifier::BOLD)),
-            Span::raw(": down  "),
-            Span::styled("Enter", Style::default().add_modifier(Modifier::BOLD)),
-            Span::raw(": select letter  "),
+            Span::raw(": right  "),
+            Span::styled("S-<D>", Style::default().add_modifier(Modifier::BOLD)),
+            Span::raw(": move  "),
         ])
     }
 }
