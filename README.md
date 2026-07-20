@@ -1,6 +1,6 @@
 # Orstacean
 
-It's your birthday! As for your birthday present, _you've been abducted by a crap…_?
+It's your birthday! As for your birthday present, _you've been abducted by a crab…_?
 
 Welcome to Orstacean, your adventure through the world of crustaceans.
 To escape from captivity, you must solve a range of puzzles.
