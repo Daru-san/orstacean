@@ -55,6 +55,7 @@
             buildInputs = with pkgs; [
               chafa
               glib
+              alsa-lib
             ];
 
             meta = {
@@ -72,6 +73,7 @@
               pkg-config
               glib
               wild
+              alsa-lib
               clippy
             ];
             RUST_SRC_PATH = pkgs.rustPlatform.rustLibSrc;
