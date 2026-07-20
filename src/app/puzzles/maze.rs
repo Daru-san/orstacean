@@ -150,4 +150,8 @@ impl IPuzzle for Maze {
             Span::raw(": down  "),
         ])
     }
+
+    fn instructions(&self) -> Vec<String> {
+        vec![]
+    }
 }

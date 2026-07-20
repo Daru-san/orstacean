@@ -169,6 +169,17 @@ impl IPuzzle for PaneGrid {
             Span::raw(": move  "),
         ])
     }
+
+    fn instructions(&self) -> Vec<String> {
+        vec![
+            String::from("Welcome to the Word Match Puzzle."),
+            String::from("This one is rather simple."),
+            String::from(
+                "Arrange the letters in the grid until they make up the word in question.",
+            ),
+            String::from("No time limitation shall be put on you during this puzzle."),
+        ]
+    }
 }
 
 fn move_pane(layout: &mut Hypertile, direction: Direction, towards: Towards) {
