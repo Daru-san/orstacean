@@ -198,7 +198,7 @@ impl App {
 
                 if self.progress_form.value >= 1. {
                     self.state = State::Dashboard(Stage::Greeting);
-                    self.dashboard.greet()?;
+                    self.dashboard.greet();
                     let start_playback = &mut self.start_playback;
                     start_playback(&mut self.sink, &self.mixer, self.volume.get())?;
                 }
