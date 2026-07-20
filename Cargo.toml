@@ -2,6 +2,8 @@
 name = "orstacean"
 version = "0.1.0"
 edition = "2024"
+repository = "https://github.com/Daru-san/orstacean"
+authors = ["Daru-san"]
 
 [package.metadata.wix]
 upgrade-guid = "A39ECE4A-B53A-4C94-958B-0B4A9A996644"
