@@ -155,7 +155,16 @@ impl IPuzzle for Maze {
     }
 
     fn instructions(&self) -> Vec<String> {
-        vec![]
+        vec![
+            String::from("Welcome to the Crabirinth."),
+            String::from("Here, we work together."),
+            String::from("You will provide me with instructions to follow as I navigate the maze."),
+            String::from("We need to reach the end of the maze."),
+            String::from("Once we reach the end, we can relax."),
+            String::from("We don't have much time, failure will incur serious consequences."),
+        ]
+    }
+
     fn completed(&self) -> bool {
         (!self.timedout()) && (self.player == self.goal)
     }
