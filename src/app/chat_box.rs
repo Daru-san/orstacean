@@ -46,7 +46,7 @@ fn message_height(text: &str, inner_width: u16) -> u16 {
 
 impl ChatBox {
     pub fn new(text: &[String], state: AppState) -> Self {
-        let playback_sink = rodio::Sink::connect_new(&state.mixer());
+        let playback_sink = rodio::Sink::connect_new(state.mixer());
 
         Self {
             messages: text.to_vec(),
