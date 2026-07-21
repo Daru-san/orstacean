@@ -3,7 +3,8 @@ use std::time::Duration;
 use rand::seq::SliceRandom;
 use ratatui::layout::Constraint::{Min, Percentage};
 use ratatui::layout::Layout;
-use ratatui::text::Line;
+use ratatui::style::{Modifier, Style};
+use ratatui::text::{Line, Span};
 use rodio::cpal::FromSample;
 
 use crate::app::puzzles::IPuzzle;
@@ -73,7 +74,10 @@ impl IPuzzle for Riddles {
     }
 
     fn keys_hints<'a>(&self) -> ratatui::prelude::Line<'a> {
-        Line::from_iter([String::from("Hello")])
+        Line::from_iter([
+            Span::styled("<C-S>", Style::default().add_modifier(Modifier::BOLD)),
+            Span::raw(": submit  "),
+        ])
     }
 
     fn completed(&self) -> bool {
