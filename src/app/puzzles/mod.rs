@@ -80,7 +80,6 @@ impl PuzzleView {
             .bold()
             .centered()
             .block(Block::bordered())
-            .slow_blink()
             .render(header_area, frame.buffer_mut());
 
         let mut puzzle = self.puzzle.borrow_mut();

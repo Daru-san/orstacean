@@ -112,7 +112,6 @@ impl Dashboard {
             .bold()
             .centered()
             .block(Block::bordered())
-            .slow_blink()
             .render(header_area, buf);
 
         let layout = Layout::vertical([Percentage(100), Min(1)]);

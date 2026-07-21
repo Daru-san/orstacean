@@ -110,7 +110,6 @@ impl InputForm {
             .bold()
             .centered()
             .block(Block::bordered())
-            .slow_blink()
             .render(header_area, frame.buffer_mut());
 
         let mut parts = Vec::from_iter(self.state.volume_hints());
