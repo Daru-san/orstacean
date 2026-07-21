@@ -136,7 +136,8 @@ impl PuzzleView {
             }
             puzzle.handle_events(event)
         } else {
-            self.chatbox.handle_events(event)
+            self.chatbox.handle_events(event);
+            Ok(())
         }
     }
 
