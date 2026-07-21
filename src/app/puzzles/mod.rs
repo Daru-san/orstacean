@@ -117,16 +117,22 @@ impl PuzzleView {
     pub fn handle_events(&mut self, event: Event) -> color_eyre::Result<()> {
         if self.chatbox.done() {
             let mut puzzle = self.puzzle.borrow_mut();
-            if let Event::Key(key) = event
-                && matches!(key.code, KeyCode::Char('?'))
-                && key.modifiers.is_empty()
-            {
-                let mut instructions = vec![
-                    String::from("You need more instructions?"),
-                    String::from("I'll start from the top, listen carefully"),
-                ];
-                instructions.extend(puzzle.instructions());
-                self.chatbox = ChatBox::new(&instructions, self.state.clone());
+            if let Event::Key(key) = event {
+                if matches!(key.code, KeyCode::Char('?')) && key.modifiers.is_empty() {
+                    let mut instructions = vec![
+                        String::from("You need more instructions?"),
+                        String::from("I'll start from the top, listen carefully"),
+                    ];
+                    instructions.extend(puzzle.instructions());
+                    self.chatbox = ChatBox::new(&instructions, self.state.clone());
+                }
+
+                if matches!(key.code, KeyCode::Char('p'))
+                    && key.modifiers.eq(&KeyModifiers::CONTROL)
+                {
+                    let paused = puzzle.is_paused();
+                    puzzle.toggle_pause(paused);
+                }
             }
             puzzle.handle_events(event)
         } else {
