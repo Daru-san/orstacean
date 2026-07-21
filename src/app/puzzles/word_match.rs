@@ -185,7 +185,7 @@ impl IPuzzle for WordMatch {
             Span::raw(": down  "),
             Span::styled("L or ►", Style::default().add_modifier(Modifier::BOLD)),
             Span::raw(": right  "),
-            Span::styled("S-<D>", Style::default().add_modifier(Modifier::BOLD)),
+            Span::styled("S-<Key>", Style::default().add_modifier(Modifier::BOLD)),
             Span::raw(": move  "),
         ])
     }
