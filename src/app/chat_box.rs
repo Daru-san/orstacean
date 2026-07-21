@@ -99,12 +99,12 @@ impl ChatBox {
         frame.render_stateful_widget(scroll_view, area, &mut self.scroll_state);
     }
 
-    pub fn update(&mut self) -> color_eyre::Result<bool> {
+    pub fn update(&mut self) -> bool {
         self.tick();
 
         self.playback_sink.set_volume(self.state.volume());
 
-        Ok(self.done())
+        self.done()
     }
 
     pub fn handle_events(&mut self, event: Event) {

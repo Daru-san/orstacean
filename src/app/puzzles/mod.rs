@@ -137,7 +137,7 @@ impl PuzzleView {
     }
 
     pub fn update(&mut self) -> color_eyre::Result<()> {
-        if self.chatbox.update()? {
+        if self.chatbox.update() {
             let mut puzzle = self.puzzle.borrow_mut();
             puzzle.update();
 

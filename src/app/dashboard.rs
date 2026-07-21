@@ -142,7 +142,7 @@ impl Dashboard {
     }
 
     pub fn update(&mut self) -> color_eyre::Result<bool> {
-        self.chatbox.update()?;
+        self.chatbox.update();
 
         Ok(self.done())
     }
