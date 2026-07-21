@@ -95,7 +95,7 @@ impl WordMatch {
 
 impl IPuzzle for WordMatch {
     fn render(&mut self, frame: &mut Frame, area: Rect) {
-        if let Some(ref timer) = self.timeout {
+        if let Some(ref mut timer) = self.timeout {
             let layout = Layout::vertical([Percentage(100), Min(1)]);
             let [main_area, bottom_area] = area.layout(&layout);
             timer.render(bottom_area, frame.buffer_mut());
