@@ -2,7 +2,7 @@ use std::cell::LazyCell;
 use std::io::{BufReader, Cursor};
 use std::time::{Duration, Instant};
 
-use crossterm::event::{self, Event, KeyCode};
+use crossterm::event::{self, Event, KeyCode, KeyModifiers};
 use ratatui::layout::Size;
 use ratatui::widgets::{Paragraph, Wrap};
 use ratatui::{Frame, layout::Rect, widgets::Block};
