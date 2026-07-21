@@ -59,7 +59,6 @@ impl Dashboard {
         self.chatbox = ChatBox::new(
             &[
                 format!("Irrashai {}.", name.as_ref()),
-                String::from("Nice to meet you."),
                 format!(
                     "Today, we're going to celebrate you {age}{} birthday!",
                     age_suffix(age)
