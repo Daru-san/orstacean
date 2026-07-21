@@ -213,7 +213,7 @@ impl IPuzzle for WordMatch {
     }
 
     fn is_paused(&self) -> bool {
-        self.timer.as_ref().is_some_and(|timer| timer.is_paused())
+        self.timer.as_ref().is_some_and(Timer::is_paused)
     }
 
     fn can_pause(&self) -> bool {
