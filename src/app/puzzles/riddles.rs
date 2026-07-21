@@ -3,6 +3,8 @@ use std::time::Duration;
 use rand::seq::SliceRandom;
 use ratatui::layout::Constraint::{Min, Percentage};
 use ratatui::layout::Layout;
+use ratatui::text::Line;
+use rodio::cpal::FromSample;
 
 use crate::app::puzzles::IPuzzle;
 use crate::app::puzzles::riddles::list::RIDDLES;
@@ -16,7 +18,7 @@ pub struct Riddles {
 }
 
 impl Riddles {
-    pub fn new(timeout: Duration) -> Riddles {
+    pub fn new(timeout: Duration) -> Self {
         let mut entries = RIDDLES.to_vec();
         let mut rng = rand::rng();
         entries.shuffle(&mut rng);
@@ -60,5 +62,23 @@ impl IPuzzle for Riddles {
             ),
             String::from("Three correct attempts and you pass."),
         ]
+    }
+
+    fn update(&mut self) {}
+
+    fn handle_events(&mut self, event: crossterm::event::Event) -> color_eyre::Result<()> {
+        Ok(())
+    }
+
+    fn keys_hints<'a>(&self) -> ratatui::prelude::Line<'a> {
+        Line::from_iter([String::from("Hello")])
+    }
+
+    fn completed(&self) -> bool {
+        false
+    }
+
+    fn failed(&self) -> bool {
+        false
     }
 }
