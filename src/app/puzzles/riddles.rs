@@ -39,7 +39,7 @@ impl IPuzzle for Riddles {
     fn render(&mut self, frame: &mut ratatui::prelude::Frame, area: ratatui::prelude::Rect) {
         let layout = Layout::vertical([Percentage(100), Min(1)]);
         let [main_area, bottom_area] = area.layout(&layout);
-        frame.render_widget(&self.timer, bottom_area);
+        frame.render_widget(&mut self.timer, bottom_area);
     }
 
     fn instructions(&self) -> Vec<String> {
