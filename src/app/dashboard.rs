@@ -148,7 +148,7 @@ impl Dashboard {
     }
 
     pub fn handle_events(&mut self, event: Event) -> color_eyre::Result<()> {
-        self.chatbox.handle_events(event)?;
+        self.chatbox.handle_events(event);
         Ok(())
     }
 

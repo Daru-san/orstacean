@@ -100,14 +100,14 @@ impl ChatBox {
     }
 
     pub fn update(&mut self) -> color_eyre::Result<bool> {
-        self.tick()?;
+        self.tick();
 
         self.playback_sink.set_volume(self.state.volume());
 
         Ok(self.done())
     }
 
-    pub fn handle_events(&mut self, event: Event) -> color_eyre::Result<()> {
+    pub fn handle_events(&mut self, event: Event) {
         if let Some(key) = event.as_key_press_event() {
             match key.code {
                 KeyCode::Char('j') | KeyCode::Down => self.scroll_state.scroll_down(),
@@ -122,16 +122,15 @@ impl ChatBox {
                 _ => (),
             }
         }
-        Ok(())
     }
 
-    pub fn tick(&mut self) -> color_eyre::Result<()> {
+    pub fn tick(&mut self) {
         if self.done() {
-            return Ok(());
+            return;
         }
 
         let Some(current) = self.messages.get(self.current_message) else {
-            return Ok(());
+            return;
         };
 
         let total_chars = current.chars().count();
@@ -150,7 +149,7 @@ impl ChatBox {
                     }
                 }
             }
-            return Ok(());
+            return;
         }
 
         if self.last_tick.elapsed() >= self.char_delay {
@@ -166,8 +165,6 @@ impl ChatBox {
                 self.playback_sink.play();
             }
         }
-
-        Ok(())
     }
 
     pub const fn done(&self) -> bool {
