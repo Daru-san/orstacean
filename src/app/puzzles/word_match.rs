@@ -136,31 +136,30 @@ impl IPuzzle for WordMatch {
         let ctrl = key.modifiers == KeyModifiers::CONTROL;
 
         match key.code {
-            KeyCode::Enter => {}
             KeyCode::Left | KeyCode::Char('h') if none => {
-                focus(&mut self.layout, Direction::Horizontal, Towards::Start)
+                focus(&mut self.layout, Direction::Horizontal, Towards::Start);
             }
             KeyCode::Right | KeyCode::Char('l') if none => {
-                focus(&mut self.layout, Direction::Horizontal, Towards::End)
+                focus(&mut self.layout, Direction::Horizontal, Towards::End);
             }
             KeyCode::Up | KeyCode::Char('k') if none => {
-                focus(&mut self.layout, Direction::Vertical, Towards::Start)
+                focus(&mut self.layout, Direction::Vertical, Towards::Start);
             }
             KeyCode::Down | KeyCode::Char('j') if none => {
-                focus(&mut self.layout, Direction::Vertical, Towards::End)
+                focus(&mut self.layout, Direction::Vertical, Towards::End);
             }
 
             KeyCode::Left | KeyCode::Char('H') if shift => {
-                move_pane(&mut self.layout, Direction::Horizontal, Towards::Start)
+                move_pane(&mut self.layout, Direction::Horizontal, Towards::Start);
             }
             KeyCode::Right | KeyCode::Char('L') if shift => {
-                move_pane(&mut self.layout, Direction::Horizontal, Towards::End)
+                move_pane(&mut self.layout, Direction::Horizontal, Towards::End);
             }
             KeyCode::Up | KeyCode::Char('K') if shift => {
-                move_pane(&mut self.layout, Direction::Vertical, Towards::Start)
+                move_pane(&mut self.layout, Direction::Vertical, Towards::Start);
             }
             KeyCode::Down | KeyCode::Char('J') if shift => {
-                move_pane(&mut self.layout, Direction::Vertical, Towards::End)
+                move_pane(&mut self.layout, Direction::Vertical, Towards::End);
             }
             KeyCode::Char('s') if ctrl => {
                 self.completed = true;
