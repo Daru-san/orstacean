@@ -34,7 +34,7 @@ pub struct WordMatch {
     panes: PaneMap,
     layout: Hypertile,
     completed: bool,
-    timeout: Option<Timer>,
+    timer: Option<Timer>,
 }
 
 impl WordMatch {
@@ -77,7 +77,7 @@ impl WordMatch {
             layout,
             panes,
             completed: false,
-            timeout: timeout.map(Timer::new),
+            timer: timeout.map(Timer::new),
         })
     }
 
@@ -95,7 +95,7 @@ impl WordMatch {
 
 impl IPuzzle for WordMatch {
     fn render(&mut self, frame: &mut Frame, area: Rect) {
-        if let Some(ref mut timer) = self.timeout {
+        if let Some(ref mut timer) = self.timer {
             let layout = Layout::vertical([Percentage(100), Min(1)]);
             let [main_area, bottom_area] = area.layout(&layout);
             timer.render(bottom_area, frame.buffer_mut());
@@ -113,7 +113,12 @@ impl IPuzzle for WordMatch {
             );
         }
     }
-    fn update(&mut self) {}
+
+    fn update(&mut self) {
+        if let Some(ref mut timer) = self.timer {
+            timer.update();
+        }
+    }
 
     fn completed(&self) -> bool {
         self.check_sorted() && self.completed
@@ -128,6 +133,7 @@ impl IPuzzle for WordMatch {
 
         let none = key.modifiers == KeyModifiers::NONE;
         let shift = key.modifiers == KeyModifiers::SHIFT;
+        let ctrl = key.modifiers == KeyModifiers::CONTROL;
 
         match key.code {
             KeyCode::Enter => {}
@@ -194,6 +200,24 @@ impl IPuzzle for WordMatch {
             ),
             String::from("No time limitation shall be put on you during this puzzle."),
         ]
+    }
+
+    fn toggle_pause(&mut self, pause: bool) {
+        if let Some(timer) = self.timer.as_mut() {
+            if pause {
+                timer.pause();
+            } else {
+                timer.unpause();
+            }
+        }
+    }
+
+    fn is_paused(&self) -> bool {
+        self.timer.as_ref().is_some_and(|timer| timer.is_paused())
+    }
+
+    fn can_pause(&self) -> bool {
+        self.timer.is_some()
     }
 }
 

@@ -64,7 +64,9 @@ impl IPuzzle for Riddles {
         ]
     }
 
-    fn update(&mut self) {}
+    fn update(&mut self) {
+        self.timer.update();
+    }
 
     fn handle_events(&mut self, event: crossterm::event::Event) -> color_eyre::Result<()> {
         Ok(())
@@ -80,5 +82,21 @@ impl IPuzzle for Riddles {
 
     fn failed(&self) -> bool {
         false
+    }
+
+    fn toggle_pause(&mut self, pause: bool) {
+        if pause {
+            self.timer.pause();
+        } else {
+            self.timer.unpause();
+        }
+    }
+
+    fn is_paused(&self) -> bool {
+        self.timer.is_paused()
+    }
+
+    fn can_pause(&self) -> bool {
+        true
     }
 }

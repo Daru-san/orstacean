@@ -143,6 +143,7 @@ impl IPuzzle for Maze {
         }
     }
     fn update(&mut self) {
+        self.timer.update();
         if self.timedout() {}
     }
 
@@ -201,5 +202,21 @@ impl IPuzzle for Maze {
 
     fn failed(&self) -> bool {
         self.timedout()
+    }
+
+    fn can_pause(&self) -> bool {
+        true
+    }
+
+    fn toggle_pause(&mut self, pause: bool) {
+        if pause {
+            self.timer.pause();
+        } else {
+            self.timer.unpause();
+        }
+    }
+
+    fn is_paused(&self) -> bool {
+        self.timer.is_paused()
     }
 }

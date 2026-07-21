@@ -49,6 +49,9 @@ pub trait IPuzzle {
     fn instructions(&self) -> Vec<String>;
     fn completed(&self) -> bool;
     fn failed(&self) -> bool;
+    fn toggle_pause(&mut self, pause: bool);
+    fn is_paused(&self) -> bool;
+    fn can_pause(&self) -> bool;
 }
 
 impl PuzzleView {
@@ -83,6 +86,19 @@ impl PuzzleView {
         let mut puzzle = self.puzzle.borrow_mut();
 
         let mut help = Line::from_iter(self.state.volume_hints());
+        {
+            let puzzle = self.puzzle.borrow();
+            if puzzle.can_pause() && !puzzle.completed() {
+                help.extend([
+                    Span::styled("C-P", Style::default().add_modifier(Modifier::ITALIC)),
+                    Span::raw(if puzzle.is_paused() {
+                        "❚❚   "
+                    } else {
+                        "▶   "
+                    }),
+                ]);
+            }
+        }
         help.extend(puzzle.keys_hints());
         help.extend([
             Span::styled("?", Style::default().add_modifier(Modifier::BOLD)),
