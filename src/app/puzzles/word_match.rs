@@ -121,8 +121,8 @@ impl IPuzzle for WordMatch {
     fn failed(&self) -> bool {
         self.completed && !self.check_sorted()
     }
-    fn handle_events(&mut self) -> color_eyre::Result<()> {
-        let Event::Key(key) = event::read()? else {
+    fn handle_events(&mut self, event: Event) -> color_eyre::Result<()> {
+        let Event::Key(key) = event else {
             return Ok(());
         };
 

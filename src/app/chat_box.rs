@@ -2,7 +2,7 @@ use std::cell::LazyCell;
 use std::io::{BufReader, Cursor};
 use std::time::{Duration, Instant};
 
-use crossterm::event::{self, KeyCode};
+use crossterm::event::{self, Event, KeyCode};
 use ratatui::layout::Size;
 use ratatui::widgets::{Paragraph, Wrap};
 use ratatui::{Frame, layout::Rect, widgets::Block};
@@ -107,8 +107,8 @@ impl ChatBox {
         Ok(self.done())
     }
 
-    pub fn handle_events(&mut self) -> color_eyre::Result<()> {
-        if let Some(key) = event::read()?.as_key_press_event() {
+    pub fn handle_events(&mut self, event: Event) -> color_eyre::Result<()> {
+        if let Some(key) = event.as_key_press_event() {
             match key.code {
                 KeyCode::Char('j') | KeyCode::Down => self.scroll_state.scroll_down(),
                 KeyCode::Char('k') | KeyCode::Up => self.scroll_state.scroll_up(),

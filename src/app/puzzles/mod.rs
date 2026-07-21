@@ -42,7 +42,7 @@ enum Puzzle {
 
 pub trait IPuzzle {
     fn update(&mut self);
-    fn handle_events(&mut self) -> color_eyre::Result<()>;
+    fn handle_events(&mut self, event: Event) -> color_eyre::Result<()>;
     fn render(&mut self, frame: &mut Frame, area: Rect);
     fn keys_hints<'a>(&self) -> Line<'a>;
     fn instructions(&self) -> Vec<String>;
@@ -100,12 +100,12 @@ impl PuzzleView {
         }
     }
 
-    pub fn handle_events(&mut self) -> color_eyre::Result<()> {
+    pub fn handle_events(&mut self, event: Event) -> color_eyre::Result<()> {
         if !self.chatbox.done() {
-            self.chatbox.handle_events()
+            self.chatbox.handle_events(event)
         } else {
             let mut puzzle = self.puzzle.borrow_mut();
-            if let Event::Key(key) = event::read()? {
+            if let Event::Key(key) = event {
                 if matches!(key.code, KeyCode::Char('?')) && key.modifiers.is_empty() {
                     let mut instructions = vec![
                         String::from("You need more instructions?"),
@@ -115,7 +115,7 @@ impl PuzzleView {
                     self.chatbox = ChatBox::new(&instructions, self.state.clone());
                 }
             }
-            puzzle.handle_events()
+            puzzle.handle_events(event)
         }
     }
 

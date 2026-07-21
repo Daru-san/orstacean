@@ -1,4 +1,4 @@
-
+use crossterm::event::Event;
 use ratatui::layout::Constraint::{Length, Min, Percentage};
 use ratatui::layout::Layout;
 use ratatui::style::{Modifier, Style, Stylize};
@@ -147,8 +147,8 @@ impl Dashboard {
         Ok(self.done())
     }
 
-    pub fn handle_events(&mut self) -> color_eyre::Result<()> {
-        self.chatbox.handle_events()?;
+    pub fn handle_events(&mut self, event: Event) -> color_eyre::Result<()> {
+        self.chatbox.handle_events(event)?;
         Ok(())
     }
 

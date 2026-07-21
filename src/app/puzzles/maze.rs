@@ -146,8 +146,8 @@ impl IPuzzle for Maze {
         if self.timedout() {}
     }
 
-    fn handle_events(&mut self) -> color_eyre::Result<()> {
-        if let Event::Key(key) = event::read()?
+    fn handle_events(&mut self, event: Event) -> color_eyre::Result<()> {
+        if let Event::Key(key) = event
             && key.modifiers.is_empty()
         {
             if self.timedout() {

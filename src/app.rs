@@ -333,7 +333,8 @@ impl App {
             }
             Ok(false)
         };
-        if let Some(key) = event::read()?.as_key_press_event() {
+        let event = event::read()?;
+        if let Some(key) = event.as_key_press_event() {
             if check_state(key)? {
                 return Ok(());
             }
@@ -361,19 +362,20 @@ impl App {
                 self.confirm_state.replace(State::Reset);
                 return Ok(());
             }
-            match self.state {
-                State::Loading => {}
-                State::Input => {
-                    self.input_form.handle_event(event::read()?);
-                }
-                State::Dashboard(_) => {
-                    self.dashboard.handle_events()?;
-                }
-                State::Quit => {}
-                State::Reset => {}
-                State::Ready => {
-                    self.puzzle_view.handle_events()?;
-                }
+        }
+
+        match self.state {
+            State::Loading => {}
+            State::Input => {
+                self.input_form.handle_event(event);
+            }
+            State::Dashboard(_) => {
+                self.dashboard.handle_events(event)?;
+            }
+            State::Quit => {}
+            State::Reset => {}
+            State::Ready => {
+                self.puzzle_view.handle_events(event)?;
             }
         }
 
