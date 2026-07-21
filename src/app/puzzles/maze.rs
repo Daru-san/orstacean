@@ -197,11 +197,11 @@ impl IPuzzle for Maze {
     }
 
     fn completed(&self) -> bool {
-        (!self.timedout()) && (self.player == self.goal)
+        self.player == self.goal
     }
 
     fn failed(&self) -> bool {
-        self.timedout()
+        self.completed && self.timedout()
     }
 
     fn can_pause(&self) -> bool {
