@@ -15,6 +15,7 @@ use crate::APP_NAME;
 use crate::app::AppState;
 use crate::app::chat_box::ChatBox;
 use crate::app::puzzles::maze::Maze;
+use crate::app::puzzles::riddles::Riddles;
 use crate::app::puzzles::word_match::WordMatch;
 
 mod cipher;
@@ -163,6 +164,25 @@ impl PuzzleView {
                 self.results.push(String::from("Crab"));
             }
             Puzzle::Tile2 => {
+                let next = Riddles::new(Duration::from_mins(10));
+                let instructions = next.instructions();
+                let puzzle = Rc::new(RefCell::new(next));
+                self.active_puzzle = Puzzle::Riddle;
+                self.puzzle = puzzle;
+
+                self.chatbox = ChatBox::new(
+                    &[
+                        vec![
+                            String::from("Congratulations on completing the last puzzle."),
+                            String::from("Next, you will need to wrack you brain."),
+                        ],
+                        instructions,
+                    ]
+                    .into_iter()
+                    .flatten()
+                    .collect::<Vec<_>>(),
+                    self.state.clone(),
+                );
                 self.results.push(String::from("Crustacean"));
             }
             Puzzle::Riddle => {
