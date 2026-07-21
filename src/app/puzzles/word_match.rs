@@ -162,7 +162,7 @@ impl IPuzzle for WordMatch {
             KeyCode::Down | KeyCode::Char('J') if shift => {
                 move_pane(&mut self.layout, Direction::Vertical, Towards::End)
             }
-            KeyCode::Char('S') if shift => {
+            KeyCode::Char('s') if ctrl => {
                 self.completed = true;
             }
             _ => {}
