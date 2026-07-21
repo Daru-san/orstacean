@@ -414,7 +414,7 @@ impl ProgressForm {
             .render(line_area, buf);
 
         let help = Line::from(vec![
-            Span::styled("Ctrl-Q", Style::default().add_modifier(Modifier::BOLD)),
+            Span::styled("C-Q", Style::default().add_modifier(Modifier::BOLD)),
             Span::raw(": quit  "),
         ]);
 
