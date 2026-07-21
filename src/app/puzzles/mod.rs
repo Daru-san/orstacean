@@ -106,39 +106,38 @@ impl PuzzleView {
 
         help.render(bottom_area, frame.buffer_mut());
 
-        if !self.chatbox.done() {
+        if self.chatbox.done() {
+            puzzle.render(frame, main_area);
+        } else {
             let layout = Layout::vertical([Percentage(50), Percentage(50)]);
             let [puzzle_area, side_area] = layout.areas(main_area);
             puzzle.render(frame, side_area);
             self.chatbox.render(frame, puzzle_area);
-        } else {
-            puzzle.render(frame, main_area);
         }
     }
 
     pub fn handle_events(&mut self, event: Event) -> color_eyre::Result<()> {
-        if !self.chatbox.done() {
-            self.chatbox.handle_events(event)
-        } else {
+        if self.chatbox.done() {
             let mut puzzle = self.puzzle.borrow_mut();
-            if let Event::Key(key) = event {
-                if matches!(key.code, KeyCode::Char('?')) && key.modifiers.is_empty() {
-                    let mut instructions = vec![
-                        String::from("You need more instructions?"),
-                        String::from("I'll start from the top, listen carefully"),
-                    ];
-                    instructions.extend(puzzle.instructions());
-                    self.chatbox = ChatBox::new(&instructions, self.state.clone());
-                }
+            if let Event::Key(key) = event
+                && matches!(key.code, KeyCode::Char('?'))
+                && key.modifiers.is_empty()
+            {
+                let mut instructions = vec![
+                    String::from("You need more instructions?"),
+                    String::from("I'll start from the top, listen carefully"),
+                ];
+                instructions.extend(puzzle.instructions());
+                self.chatbox = ChatBox::new(&instructions, self.state.clone());
             }
             puzzle.handle_events(event)
+        } else {
+            self.chatbox.handle_events(event)
         }
     }
 
     pub fn update(&mut self) -> color_eyre::Result<()> {
-        if !self.chatbox.update()? {
-            Ok(())
-        } else {
+        if self.chatbox.update()? {
             let mut puzzle = self.puzzle.borrow_mut();
             puzzle.update();
 
@@ -149,6 +148,8 @@ impl PuzzleView {
                 drop(puzzle);
                 self.demote()?;
             }
+            Ok(())
+        } else {
             Ok(())
         }
     }
@@ -284,7 +285,7 @@ impl PuzzleView {
                 );
                 self.results.clear();
             }
-            _ => unimplemented!(),
+            Puzzle::Cipher => {}
         }
 
         self.failures.add_assign(1);
