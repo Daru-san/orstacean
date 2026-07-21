@@ -3,7 +3,7 @@ use std::ops::AddAssign;
 use std::rc::Rc;
 use std::time::Duration;
 
-use crossterm::event::{self, Event, KeyCode, KeyEvent};
+use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
 use ratatui::Frame;
 use ratatui::layout::Constraint::{self, Min, Percentage};
 use ratatui::layout::{Direction, Layout, Rect};
