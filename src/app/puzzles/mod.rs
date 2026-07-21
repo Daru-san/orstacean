@@ -85,18 +85,16 @@ impl PuzzleView {
         let mut puzzle = self.puzzle.borrow_mut();
 
         let mut help = Line::from_iter(self.state.volume_hints());
-        {
-            let puzzle = self.puzzle.borrow();
-            if puzzle.can_pause() && !puzzle.completed() {
-                help.extend([
-                    Span::styled("C-P", Style::default().add_modifier(Modifier::ITALIC)),
-                    Span::raw(if puzzle.is_paused() {
-                        "❚❚   "
-                    } else {
-                        "▶   "
-                    }),
-                ]);
-            }
+
+        if puzzle.can_pause() && !puzzle.completed() {
+            help.extend([
+                Span::styled("C-P", Style::default().add_modifier(Modifier::BOLD)),
+                Span::raw(if puzzle.is_paused() {
+                    ": ❚❚   "
+                } else {
+                    ": ▶   "
+                }),
+            ]);
         }
         help.extend(puzzle.keys_hints());
         help.extend([
