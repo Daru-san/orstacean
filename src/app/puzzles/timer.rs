@@ -1,7 +1,7 @@
 use std::time::{Duration, Instant};
 
 use ratatui::style::{Color, Style};
-use ratatui::widgets::Widget;
+use ratatui::widgets::{StatefulWidget, Widget};
 use throbber_widgets_tui::{CLOCK, Throbber, ThrobberState};
 
 pub struct Timer {
@@ -11,12 +11,16 @@ pub struct Timer {
 }
 
 impl Timer {
-    pub fn new(timeout: Duration) -> Timer {
+    pub fn new(timeout: Duration) -> Self {
         Self {
             timeout,
             throbber_state: ThrobberState::default(),
             start: Instant::now(),
         }
+    }
+
+    pub fn update(&mut self) {
+        self.throbber_state.calc_next();
     }
 
     pub fn done(&self) -> bool {
@@ -25,18 +29,18 @@ impl Timer {
     }
 }
 
-impl Widget for &Timer {
+impl Widget for &mut Timer {
     fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer)
     where
         Self: Sized,
     {
         let now = Instant::now();
         let elapsed = now.duration_since(self.start);
-        Throbber::default()
-            .label(format!("{:?}", self.timeout))
+        let throbber = Throbber::default()
+            .label(format!("{:?}", self.timeout.saturating_sub(elapsed)))
             .throbber_set(CLOCK)
-            .style(Style::default().fg(determine_color(self.timeout, elapsed)))
-            .render(area, buf);
+            .style(Style::default().fg(determine_color(self.timeout, elapsed)));
+        <Throbber as StatefulWidget>::render(throbber, area, buf, &mut self.throbber_state);
     }
 }
 
