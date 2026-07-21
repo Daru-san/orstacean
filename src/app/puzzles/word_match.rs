@@ -172,11 +172,11 @@ impl IPuzzle for WordMatch {
 
     fn keys_hints<'a>(&self) -> Line<'a> {
         Line::from(vec![
-            Span::styled("Ctrl-Q", Style::default().add_modifier(Modifier::BOLD)),
+            Span::styled("C-Q", Style::default().add_modifier(Modifier::BOLD)),
             Span::raw(": quit  "),
-            Span::styled("Ctrl-R", Style::default().add_modifier(Modifier::BOLD)),
+            Span::styled("C-R", Style::default().add_modifier(Modifier::BOLD)),
             Span::raw(": reset  "),
-            Span::styled("S-R", Style::default().add_modifier(Modifier::BOLD)),
+            Span::styled("C-S", Style::default().add_modifier(Modifier::BOLD)),
             Span::raw(": submit  "),
             Span::styled("H or ◄", Style::default().add_modifier(Modifier::BOLD)),
             Span::raw(": left  "),
