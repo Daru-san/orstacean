@@ -118,10 +118,12 @@ impl Dashboard {
 
         let mut parts = Vec::from_iter(self.state.volume_hints());
         parts.extend([
-            Span::styled("Ctrl-Q", Style::default().add_modifier(Modifier::BOLD)),
+            Span::styled("C-Q", Style::default().add_modifier(Modifier::BOLD)),
             Span::raw(": quit  "),
-            Span::styled("Ctrl-R", Style::default().add_modifier(Modifier::BOLD)),
+            Span::styled("C-R", Style::default().add_modifier(Modifier::BOLD)),
             Span::raw(": reset  "),
+            Span::styled("C-S", Style::default().add_modifier(Modifier::BOLD)),
+            Span::raw(": skip  "),
             Span::styled("H or ◄", Style::default().add_modifier(Modifier::BOLD)),
             Span::raw(": left  "),
             Span::styled("J or ▲", Style::default().add_modifier(Modifier::BOLD)),

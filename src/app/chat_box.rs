@@ -116,6 +116,9 @@ impl ChatBox {
                 KeyCode::Char('b') | KeyCode::PageUp => self.scroll_state.scroll_page_up(),
                 KeyCode::Char('g') | KeyCode::Home => self.scroll_state.scroll_to_top(),
                 KeyCode::Char('G') | KeyCode::End => self.scroll_state.scroll_to_bottom(),
+                KeyCode::Char('s') if key.modifiers.eq(&KeyModifiers::CONTROL) => {
+                    self.current_message = self.messages.len() + 1;
+                }
                 _ => (),
             }
         }
