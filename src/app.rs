@@ -18,7 +18,7 @@ use tui_spinner::RectSpinner;
 use crate::app::dashboard::{Dashboard, Stage};
 use crate::app::input::InputForm;
 use crate::app::puzzles::PuzzleView;
-use crate::{APP_NAME, Track, app};
+use crate::{APP_NAME, Track};
 
 mod chat_box;
 mod dashboard;
@@ -56,7 +56,7 @@ pub struct App {
     confirm_state: Option<State>,
     dashboard: Dashboard,
     puzzle_view: PuzzleView,
-    app_state: AppState,
+    global_state: AppState,
 }
 
 #[derive(Clone)]
@@ -129,7 +129,7 @@ impl AppState {
         self.volume.get()
     }
 
-    pub fn mixer(&self) -> &rodio::mixer::Mixer {
+    pub const fn mixer(&self) -> &rodio::mixer::Mixer {
         &self.mixer
     }
 }
@@ -141,7 +141,7 @@ impl App {
             mixer,
             volume,
             current_track: Rc::new(Cell::new(Track::Lobby)),
-            sink: Default::default(),
+            sink: Rc::default(),
         };
         Ok(Self {
             state: State::Loading,
@@ -155,7 +155,7 @@ impl App {
             confirm_state: None,
             dashboard: Dashboard::new(app_state.clone()),
             puzzle_view: PuzzleView::new(app_state.clone())?,
-            app_state,
+            global_state: app_state,
         })
     }
 
@@ -251,7 +251,7 @@ impl App {
 
     fn update(&mut self, terminal_width: u16) -> color_eyre::Result<()> {
         if !matches!(self.state, State::Loading) {
-            self.app_state.check_and_restart_current_track()?;
+            self.global_state.check_and_restart_current_track()?;
         }
         match self.state {
             State::Loading => {
@@ -265,7 +265,7 @@ impl App {
                 if self.progress_form.value >= 1. {
                     self.state = State::Dashboard(Stage::Greeting);
                     self.dashboard.greet();
-                    self.app_state.change_track(Track::Lobby)?;
+                    self.global_state.change_track(Track::Lobby)?;
                 }
             }
             State::Input => {
@@ -292,7 +292,7 @@ impl App {
             }
             State::Quit => {}
             State::Reset => {
-                self.input_form = InputForm::new(self.app_state.clone());
+                self.input_form = InputForm::new(self.global_state.clone());
                 self.state = State::Input;
             }
         }
@@ -326,7 +326,7 @@ impl App {
                     self.confirm_state.take();
                     self.state = state;
                     if matches!(state, State::Dashboard(_)) {
-                        self.app_state.change_track(Track::Lobby)?;
+                        self.global_state.change_track(Track::Lobby)?;
                     }
                     return Ok(true);
                 }
@@ -346,13 +346,13 @@ impl App {
             }
 
             if matches!(key.code, KeyCode::Char('-')) && key.modifiers.is_empty() {
-                self.app_state
-                    .set_volume((self.app_state.volume() - 0.05).clamp(0.0, 1.0));
+                self.global_state
+                    .set_volume((self.global_state.volume() - 0.05).clamp(0.0, 1.0));
             }
 
             if matches!(key.code, KeyCode::Char('+')) && key.modifiers.is_empty() {
-                self.app_state
-                    .set_volume((self.app_state.volume() + 0.05).clamp(0.0, 1.0));
+                self.global_state
+                    .set_volume((self.global_state.volume() + 0.05).clamp(0.0, 1.0));
             }
 
             if matches!(key.code, KeyCode::Char('r'))
@@ -365,27 +365,19 @@ impl App {
         }
 
         match self.state {
-            State::Loading => {}
             State::Input => {
                 self.input_form.handle_event(event);
             }
             State::Dashboard(_) => {
                 self.dashboard.handle_events(event)?;
             }
-            State::Quit => {}
-            State::Reset => {}
             State::Ready => {
                 self.puzzle_view.handle_events(event)?;
             }
+            State::Quit | State::Loading | State::Reset => {}
         }
 
         Ok(())
-    }
-
-    const fn reset(&mut self) {
-        self.progress_form.value = 0.0;
-        self.progress_form.columns = 0;
-        self.state = State::Reset;
     }
 }
 
@@ -401,12 +393,13 @@ impl ProgressForm {
 
         let [spinner_area, line_area] = header_area.layout(&header_layout);
 
-        RectSpinner::new(((self.value * 100.0) as u64).clamp(0, 100))
+        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+        RectSpinner::new((self.value * 100.0).clamp(0., 100.).trunc() as u64)
             .spin(tui_spinner::Spin::Clockwise)
             .outer_color(Color::Cyan)
             .render(spinner_area, buf);
 
-        Paragraph::new(format!("Loading {}", APP_NAME))
+        Paragraph::new(format!("Loading {APP_NAME}"))
             .bold()
             .centered()
             .block(Block::bordered())
