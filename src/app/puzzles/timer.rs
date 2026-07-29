@@ -11,6 +11,7 @@ pub struct Timer {
     start: Instant,
     paused_for: Duration,
     last_pause: Option<Instant>,
+    last_duration: Duration,
 }
 
 impl Timer {
@@ -21,6 +22,7 @@ impl Timer {
             start: Instant::now(),
             paused_for: Duration::ZERO,
             last_pause: None,
+            last_duration: Duration::ZERO,
         }
     }
 
@@ -29,12 +31,14 @@ impl Timer {
         if let Some(pause) = self.last_pause {
             let now = Instant::now();
             self.paused_for.add_assign(now.duration_since(pause));
+        } else if !self.done() {
+            let now = Instant::now();
+            self.last_duration = now.duration_since(self.start);
         }
     }
 
     pub fn done(&self) -> bool {
-        let now = Instant::now();
-        now.duration_since(self.start) >= self.timeout
+        self.last_duration >= self.timeout
     }
 
     pub fn pause(&mut self) {
@@ -59,17 +63,10 @@ impl Widget for &mut Timer {
     where
         Self: Sized,
     {
-        let now = Instant::now();
-        let elapsed = now.duration_since(self.start);
         let throbber = Throbber::default()
-            .label(format!(
-                "{:?}",
-                self.timeout
-                    .saturating_sub(elapsed)
-                    .saturating_sub(self.paused_for)
-            ))
+            .label(format!("{:?}", self.last_pause))
             .throbber_set(CLOCK)
-            .style(Style::default().fg(determine_color(self.timeout, elapsed)));
+            .style(Style::default().fg(determine_color(self.timeout, self.last_duration)));
         <Throbber as StatefulWidget>::render(throbber, area, buf, &mut self.throbber_state);
     }
 }
