@@ -1,10 +1,14 @@
 use std::time::Duration;
 
+use crossterm::event::Event;
 use rand::seq::SliceRandom;
 use ratatui::layout::Constraint::{Min, Percentage};
 use ratatui::layout::Layout;
 use ratatui::style::{Modifier, Style};
-use ratatui::text::{Line, Span};
+use ratatui::text::{self, Line, Span};
+use ratatui::widgets::{Block, Paragraph, Widget};
+use ratatui_form::TextInput;
+use ratatui_textarea::TextArea;
 use rodio::cpal::FromSample;
 
 use crate::app::puzzles::IPuzzle;
@@ -16,6 +20,18 @@ mod list;
 pub struct Riddles {
     entries: Vec<Riddle>,
     timer: Timer,
+    correct_entries: usize,
+    current_entry: Option<Riddle>,
+    current_question: usize,
+    text_area: TextArea<'static>,
+    state: State,
+}
+
+pub enum State {
+    Answering,
+    Submit,
+    Failed,
+    Complete,
 }
 
 impl Riddles {
@@ -23,11 +39,22 @@ impl Riddles {
         let mut entries = RIDDLES.to_vec();
         let mut rng = rand::rng();
         entries.shuffle(&mut rng);
-        let entries = entries.into_iter().take(3).collect();
+        let entries = entries.into_iter().take(3).collect::<Vec<_>>();
+
+        let mut text_area = TextArea::default();
+
+        text_area.set_block(Block::default().title("Answer"));
+
+        text_area.set_cursor_line_style(Style::default());
 
         Self {
+            current_entry: entries.last().cloned(),
             entries,
             timer: Timer::new(timeout),
+            correct_entries: 0,
+            current_question: 0,
+            text_area,
+            state: State::Answering,
         }
     }
 }
@@ -42,6 +69,20 @@ impl IPuzzle for Riddles {
     fn render(&mut self, frame: &mut ratatui::prelude::Frame, area: ratatui::prelude::Rect) {
         let layout = Layout::vertical([Percentage(100), Min(1)]);
         let [main_area, bottom_area] = area.layout(&layout);
+
+        let split = Layout::vertical([Percentage(60), Percentage(40)]);
+
+        let [question_area, answer_area] = main_area.layout(&split);
+        let Some(ref entry) = self.current_entry else {
+            return;
+        };
+
+        Paragraph::new(entry.question)
+            .block(Block::new().title(format!("Question {}", self.current_question)))
+            .render(question_area, frame.buffer_mut());
+
+        self.text_area.render(answer_area, frame.buffer_mut());
+
         frame.render_widget(&mut self.timer, bottom_area);
     }
 
@@ -67,9 +108,43 @@ impl IPuzzle for Riddles {
 
     fn update(&mut self) {
         self.timer.update();
+        match self.state {
+            State::Answering => {
+                if self.timer.done() {
+                    self.state = State::Failed;
+                }
+            }
+            State::Submit => {
+                if let Some(ref riddle) = self.current_entry {
+                    let answer = self.text_area.lines().concat().to_lowercase();
+                    if answer.as_str().eq(riddle.answer) {
+                        self.state = State::Answering;
+                        self.correct_entries += 1;
+                    } else {
+                        if self.current_question < 3 {
+                            self.state = State::Answering;
+                            self.current_question += 1;
+                            self.current_entry = self.entries.get(self.current_question).cloned();
+                        } else {
+                            // TODO: Add the five max redos failure condition
+                            self.state = State::Failed;
+                        }
+                    }
+                }
+            }
+            State::Failed => {}
+            State::Complete => {}
+        }
     }
 
     fn handle_events(&mut self, event: crossterm::event::Event) -> color_eyre::Result<()> {
+        if let Event::Key(key) = event {
+            if key.modifiers.is_empty() && key.code.is_enter() {
+                self.state = State::Submit;
+            }
+            self.text_area.input(key);
+        }
+
         Ok(())
     }
 
@@ -81,7 +156,7 @@ impl IPuzzle for Riddles {
     }
 
     fn completed(&self) -> bool {
-        false
+        self.correct_entries == 3
     }
 
     fn failed(&self) -> bool {
