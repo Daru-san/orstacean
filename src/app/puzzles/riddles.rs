@@ -4,7 +4,7 @@ use crossterm::event::Event;
 use rand::seq::SliceRandom;
 use ratatui::layout::Constraint::{Min, Percentage};
 use ratatui::layout::Layout;
-use ratatui::style::{Modifier, Style};
+use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{self, Line, Span};
 use ratatui::widgets::{Block, Paragraph, Widget};
 use ratatui_form::TextInput;
@@ -18,15 +18,16 @@ use crate::app::puzzles::timer::Timer;
 mod list;
 
 pub struct Riddles {
-    entries: Vec<Riddle>,
+    questions: Vec<Riddle>,
     timer: Timer,
     correct_entries: usize,
-    current_entry: Option<Riddle>,
-    current_question: usize,
+    current_question: Option<Riddle>,
+    current_question_idx: usize,
     text_area: TextArea<'static>,
     state: State,
 }
 
+#[derive(Debug, PartialEq, PartialOrd)]
 pub enum State {
     Answering,
     Submit,
@@ -34,25 +35,29 @@ pub enum State {
     Complete,
 }
 
+fn random_questions(n: usize) -> Vec<Riddle> {
+    let mut entries = RIDDLES.to_vec();
+    let mut rng = rand::rng();
+    entries.shuffle(&mut rng);
+    entries.into_iter().take(n).collect()
+}
+
 impl Riddles {
     pub fn new(timeout: Duration) -> Self {
-        let mut entries = RIDDLES.to_vec();
-        let mut rng = rand::rng();
-        entries.shuffle(&mut rng);
-        let entries = entries.into_iter().take(3).collect::<Vec<_>>();
-
         let mut text_area = TextArea::default();
 
         text_area.set_block(Block::default().title("Answer"));
 
         text_area.set_cursor_line_style(Style::default());
 
+        let questions = random_questions(3);
+
         Self {
-            current_entry: entries.last().cloned(),
-            entries,
+            current_question: questions.last().cloned(),
+            questions,
             timer: Timer::new(timeout),
             correct_entries: 0,
-            current_question: 0,
+            current_question_idx: 0,
             text_area,
             state: State::Answering,
         }
@@ -73,17 +78,61 @@ impl IPuzzle for Riddles {
         let split = Layout::vertical([Percentage(60), Percentage(40)]);
 
         let [question_area, answer_area] = main_area.layout(&split);
-        let Some(ref entry) = self.current_entry else {
-            return;
-        };
+        match self.state {
+            State::Answering | State::Submit => {
+                let Some(ref entry) = self.current_question else {
+                    return;
+                };
 
-        Paragraph::new(entry.question)
-            .block(Block::new().title(format!("Question {}", self.current_question)))
-            .render(question_area, frame.buffer_mut());
+                Paragraph::new(entry.question)
+                    .block(
+                        Block::new()
+                            .title(format!("Question {}", self.current_question_idx))
+                            .border_style(Style::default().underline_color(
+                                match self.timer.percentage_done() {
+                                    0_f64..60. => {
+                                        if self.current_question_idx >= 3 {
+                                            Color::White
+                                        } else {
+                                            Color::Green
+                                        }
+                                    }
+                                    60_f64..90. => {
+                                        if self.current_question_idx >= 3 {
+                                            Color::LightYellow
+                                        } else {
+                                            Color::Yellow
+                                        }
+                                    }
+                                    90_f64..100. => {
+                                        if self.current_question_idx >= 3 {
+                                            Color::LightRed
+                                        } else {
+                                            Color::Red
+                                        }
+                                    }
+                                    _ => unreachable!(),
+                                },
+                            )),
+                    )
+                    .render(question_area, frame.buffer_mut());
 
-        self.text_area.render(answer_area, frame.buffer_mut());
-
-        frame.render_widget(&mut self.timer, bottom_area);
+                self.text_area.render(answer_area, frame.buffer_mut());
+                frame.render_widget(&mut self.timer, bottom_area);
+            }
+            State::Failed => {
+                Paragraph::new("Time had run up, you have failed this task.")
+                    .block(Block::new().title("Question -1: There's nothing to answer anymore"))
+                    .render(question_area, frame.buffer_mut());
+                frame.render_widget(&mut self.timer, bottom_area);
+            }
+            State::Complete => {
+                Paragraph::new("Congratulations, you've completed every riddle successfully.")
+                    .block(Block::new().title("Question -1: There's nothing to answer anymore"))
+                    .render(question_area, frame.buffer_mut());
+                frame.render_widget(&mut self.timer, bottom_area);
+            }
+        }
     }
 
     fn instructions(&self) -> Vec<String> {
@@ -115,19 +164,47 @@ impl IPuzzle for Riddles {
                 }
             }
             State::Submit => {
-                if let Some(ref riddle) = self.current_entry {
+                if let Some(ref riddle) = self.current_question {
                     let answer = self.text_area.lines().concat().to_lowercase();
+                    self.text_area.clear();
                     if answer.as_str().eq(riddle.answer) {
-                        self.state = State::Answering;
-                        self.correct_entries += 1;
+                        match self.current_question_idx {
+                            0..3 => {
+                                self.state = State::Answering;
+                                self.correct_entries += 1;
+                            }
+                            3 | 5 => {
+                                self.state = State::Complete;
+                            }
+                            4 => {
+                                self.state = State::Answering;
+                                self.correct_entries += 1;
+                            }
+                            _ => unreachable!(),
+                        }
                     } else {
-                        if self.current_question < 3 {
-                            self.state = State::Answering;
-                            self.current_question += 1;
-                            self.current_entry = self.entries.get(self.current_question).cloned();
-                        } else {
-                            // TODO: Add the five max redos failure condition
-                            self.state = State::Failed;
+                        match self.current_question_idx {
+                            0..3 => {
+                                self.state = State::Answering;
+                                self.current_question_idx += 1;
+                                self.current_question =
+                                    self.questions.get(self.current_question_idx).cloned();
+                            }
+                            3 => {
+                                self.current_question_idx += 1;
+                                self.state = State::Answering;
+                                let extra = random_questions(2);
+                                self.questions.extend(extra);
+                                self.current_question =
+                                    self.questions.get(self.current_question_idx).cloned();
+                            }
+                            4 => {
+                                self.state = State::Failed;
+                            }
+                            5 => {}
+                            _ => {
+                                self.state = State::Failed;
+                            }
                         }
                     }
                 }
@@ -156,11 +233,11 @@ impl IPuzzle for Riddles {
     }
 
     fn completed(&self) -> bool {
-        self.correct_entries == 3
+        self.correct_entries <= 3 && matches!(self.state, State::Complete)
     }
 
     fn failed(&self) -> bool {
-        false
+        self.state == State::Failed
     }
 
     fn toggle_pause(&mut self, pause: bool) {
