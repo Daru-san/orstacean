@@ -1,4 +1,4 @@
-use std::ops::AddAssign;
+use std::ops::{AddAssign, Div};
 use std::time::{Duration, Instant};
 
 use ratatui::style::{Color, Style};
@@ -39,6 +39,10 @@ impl Timer {
 
     pub fn done(&self) -> bool {
         self.last_duration >= self.timeout
+    }
+
+    pub fn percentage_done(&self) -> f64 {
+        (self.timeout.div_duration_f64(self.last_duration) * 100.0).clamp(0., 100.)
     }
 
     pub fn pause(&mut self) {
