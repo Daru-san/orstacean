@@ -1,3 +1,4 @@
+use std::collections::VecDeque;
 use std::time::{Duration, Instant};
 
 use crossterm::event::{self, Event, KeyCode};
@@ -6,9 +7,9 @@ use ratatui::Frame;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Constraint::{Min, Percentage};
 use ratatui::layout::{Layout, Rect};
-use ratatui::style::{Color, Modifier, Style};
+use ratatui::style::{Color, Modifier, Style, Stylize};
 use ratatui::text::{Line, Span, Text};
-use ratatui::widgets::Widget;
+use ratatui::widgets::{Block, Widget};
 use tui_popup::Popup;
 
 use crate::app::puzzles::IPuzzle;
@@ -28,6 +29,10 @@ pub struct Maze {
     player: Position,
     goal: Position,
     start: Position,
+    chaser: Position,
+    steps: VecDeque<Position>,
+    last_tick: Option<Instant>,
+    caught: bool,
 }
 
 const START: char = 'S';
@@ -75,6 +80,10 @@ impl Maze {
             timer: Timer::new(timeout),
             completed: false,
             failed: false,
+            steps: Default::default(),
+            chaser: Position { x: 0, y: 0 },
+            last_tick: None,
+            caught: false,
         }
     }
 
@@ -90,6 +99,8 @@ impl Maze {
             self.player.x = nx as u16;
             self.player.y = ny as u16;
         }
+
+        self.steps.push_front(Position { x, y });
     }
 
     pub fn draw_grid(&self, area: Rect, buf: &mut Buffer) {
@@ -100,7 +111,9 @@ impl Maze {
                     continue;
                 }
                 let (symbol, style) = if (x as u16, y as u16) == (self.player.x, self.player.y) {
-                    ("🦀", Style::default().fg(Color::Yellow))
+                    ("🦀", Style::default().fg(Color::LightRed))
+                } else if (x as u16, y as u16) == (self.chaser.x, self.chaser.y) {
+                    ("🦝", Style::default().fg(Color::Black))
                 } else if ch == '#' {
                     ("█", Style::default().fg(Color::DarkGray))
                 } else if ch == GOAL {
@@ -132,19 +145,56 @@ impl IPuzzle for Maze {
 
         self.draw_grid(main_area, frame.buffer_mut());
 
+        Block::new()
+            .bg(match self.timer.percentage_done() {
+                0_f64..40.0 => Color::White,
+                40_f64..50.0 => Color::LightYellow,
+                50_f64..75.0 => Color::Yellow,
+                75_f64..90.0 => Color::LightRed,
+                90_f64..100.0 => Color::Red,
+                100_f64 => Color::Black,
+                _ => unreachable!(),
+            })
+            .render(main_area, frame.buffer_mut());
+
         if self.timedout() {
             let mut text = Text::default();
             text.push_line("You've run out of time. Shame.");
             text.push_line("I thought you could do it, it seems I had my hopes up too high.");
             text.push_line("Press Enter to continue...");
             Popup::new(text)
-                .title("🦀 Ferris")
+                .title("🦀 King")
                 .render(area, frame.buffer_mut());
         }
     }
     fn update(&mut self) {
         self.timer.update();
-        if self.timedout() {}
+        if !self.timer.is_paused() && !self.timedout() {
+            if let Some(tick) = self.last_tick {
+                let now = Instant::now();
+                let duration = now.duration_since(tick);
+                let tick_wait = match self.timer.percentage_done() {
+                    0_f64..40.0 => Duration::from_secs(5),
+                    40_f64..60.0 => Duration::from_secs(2),
+                    60_f64..80.0 => Duration::from_secs_f64(0.5),
+                    80.0..100.0 => Duration::from_millis(100),
+                    // When the time is zero, the racoon sprints towards King
+                    100.0 => Duration::ZERO,
+                    _ => unreachable!(),
+                };
+
+                // Advance the racoon's steps
+                if duration >= tick_wait
+                    && let Some(step) = self.steps.pop_back()
+                {
+                    self.chaser = step;
+                }
+            }
+
+            if self.chaser == self.player {
+                self.caught = true;
+            }
+        }
     }
 
     fn handle_events(&mut self, event: Event) -> color_eyre::Result<()> {
@@ -188,11 +238,23 @@ impl IPuzzle for Maze {
     fn instructions(&self) -> Vec<String> {
         vec![
             String::from("Welcome to the Crabirinth."),
-            String::from("Here, we work together."),
+            String::from("This is a place infested with disgusting rodents."),
+            String::from(
+                "Our goal is to reach the end of the maze before one of them catches up to us.",
+            ),
+            String::from(
+                "If you let one of those racoons so as touch me, I won't let you off lightly.",
+            ),
+            String::from(
+                "Furthermore, with each passing moment, the temperature in this room will increase.",
+            ),
+            String::from(
+                "If we are unable to escape before it reaches it's peak, I will be boiled alive.",
+            ),
             String::from("You will provide me with instructions to follow as I navigate the maze."),
-            String::from("We need to reach the end of the maze."),
-            String::from("Once we reach the end, we can relax."),
-            String::from("We don't have much time, failure will incur serious consequences."),
+            String::from(
+                "Let's get started as soon as possible; the rodents will likely follow my scent to track me down.",
+            ),
         ]
     }
 
@@ -201,7 +263,7 @@ impl IPuzzle for Maze {
     }
 
     fn failed(&self) -> bool {
-        self.completed && self.timedout()
+        !self.completed && (self.timedout() || self.caught)
     }
 
     fn can_pause(&self) -> bool {
@@ -213,6 +275,19 @@ impl IPuzzle for Maze {
             self.timer.pause();
         } else {
             self.timer.unpause();
+        }
+    }
+
+    fn failure_message(&self) -> Vec<String> {
+        if self.caught {
+            vec![
+                String::from("Gah! You let me get caught!"),
+                String::from("What in the ocean are you doing?!"),
+            ]
+        } else if self.timedout() {
+            vec![String::from("Well, that's it. Our time is up.")]
+        } else {
+            unreachable!()
         }
     }
 
