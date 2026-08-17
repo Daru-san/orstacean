@@ -52,6 +52,7 @@ pub trait IPuzzle {
     fn toggle_pause(&mut self, pause: bool);
     fn is_paused(&self) -> bool;
     fn can_pause(&self) -> bool;
+    fn failure_message(&self) -> Vec<String>;
 }
 
 impl PuzzleView {
