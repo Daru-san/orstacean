@@ -187,7 +187,7 @@ impl App {
                                     text.push_line("Press Enter to quit. Press Escape to continue.");
                                     text.push_line("I recommend the latter, if you value your sanity.");
                                     let popup = Popup::new(text)
-                                        .title("🦀 Ferris");
+                                        .title("🦀 King");
                                     frame.render_widget(popup, frame.area());
                                 }
                                 State::Loading => {
@@ -195,7 +195,7 @@ impl App {
                                     text.push_line("Are you sure you want to leave? We haven't even started.");
                                     text.push_line("Press Enter to quit. Press Escape to continue.");
                                     let popup = Popup::new(text)
-                                        .title("🦀 Ferris");
+                                        .title("🦀 King");
                                     frame.render_widget(popup, frame.area());
                                 }
                                 State::Input => {
@@ -203,7 +203,7 @@ impl App {
                                     text.push_line("Are you sure you want to leave? I'm still getting to know you.");
                                     text.push_line("Press Enter to quit. Press Escape to continue.");
                                     let popup = Popup::new(text)
-                                        .title("🦀 Ferris");
+                                        .title("🦀 King");
                                     frame.render_widget(popup, frame.area());
                                 }
                                 State::Dashboard(_) => {
@@ -211,7 +211,7 @@ impl App {
                                     text.push_line("Leaving?! I'm talking to you!!");
                                     text.push_line("Press Enter to quit. Press Escape to continue.");
                                     let popup = Popup::new(text)
-                                        .title("🦀 Ferris");
+                                        .title("🦀 King");
                                     frame.render_widget(popup, frame.area());
                                 }
                                 _ => unreachable!()
