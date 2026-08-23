@@ -225,6 +225,36 @@ impl IPuzzle for Riddles {
         Ok(())
     }
 
+    fn failure_message(&self) -> Vec<String> {
+        match self.current_question_idx {
+            1 => vec![
+                String::from("Time is up."),
+                String::from("You just got started!"),
+                String::from("Are you getting cold feet now?"),
+                String::from("I recommend you reflect on your actions."),
+                String::from("You can't run away from all your problems by waiting..."),
+            ],
+            2 => vec![
+                String::from("You ran out of time."),
+                String::from(
+                    "Were you unable to answer a simple question or did you just run away?",
+                ),
+                String::from("Stand up, dust yourself, and try again."),
+            ],
+            3 => {
+                if self.timer.done() {
+                    vec![
+                        String::from("That's it for time."),
+                        String::from(""),
+                        String::from(""),
+                    ]
+                } else {
+                    vec![String::from("")]
+                }
+            }
+        }
+    }
+
     fn keys_hints<'a>(&self) -> ratatui::prelude::Line<'a> {
         Line::from_iter([
             Span::styled("<C-S>", Style::default().add_modifier(Modifier::BOLD)),
