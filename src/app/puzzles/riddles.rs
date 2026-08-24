@@ -245,13 +245,53 @@ impl IPuzzle for Riddles {
                 if self.timer.done() {
                     vec![
                         String::from("That's it for time."),
-                        String::from(""),
-                        String::from(""),
+                        String::from("You were on the last question too."),
+                        String::from("Unfortunately, this is where it ends."),
+                        String::from("Come back when you are ready to fight like you mean it."),
                     ]
                 } else {
                     vec![String::from("")]
                 }
             }
+            4 => {
+                if self.timer.done() {
+                    vec![
+                        String::from("You were this close to success and... your time ran out?"),
+                        String::from("Be more mindful of your time."),
+                        String::from(
+                            "Time is money, is you waste it like this, you'll be broke in an instant.",
+                        ),
+                    ]
+                } else {
+                    vec![
+                        String::from("I gave you an opportunity from the goodness of my heart."),
+                        String::from(
+                            "Yet despite that, you were unable to complete this simple trail?",
+                        ),
+                        String::from(
+                            "Should I find someone else to deal with this? I think that may be best.",
+                        ),
+                    ]
+                }
+            }
+            5 => {
+                if self.timer.done() {
+                    vec![
+                        String::from("That was your final chance and... you let time run out?"),
+                        String::from("You could have done better than that..."),
+                        String::from("What was I expecting anyway..."),
+                    ]
+                } else {
+                    vec![
+                        String::from("I gave you chances to redeem yourself and... you fail?"),
+                        String::from("That's a shame."),
+                        String::from(
+                            "Can't say I can do much for you, it's up to you to learn from this.",
+                        ),
+                    ]
+                }
+            }
+            _ => unreachable!("The riddles must only have five total tries."),
         }
     }
 
