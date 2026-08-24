@@ -148,6 +148,27 @@ impl IPuzzle for WordMatch {
         Ok(())
     }
 
+    fn failure_message(&self) -> Vec<String> {
+        match self.word {
+            "CRAB" => vec![
+                String::from("Spelling."),
+                String::from("S..p..e..l..l..i..n..g"),
+                String::from("How did you fail to spell such a simple word??"),
+                String::from("I won't hold this against you."),
+                String::from("No, I will absolutely hold it against you."),
+                String::from("Come back when you can spell correctly."),
+            ],
+            "CRUSTACEAN" => {
+                if self.timer.as_ref().is_some_and(|timer| timer.done()) {
+                    vec![String::from("")]
+                } else {
+                    vec![String::from("")]
+                }
+            }
+            _ => unreachable!("The only two words on this puzzle must be 'CRAB' and 'CRUSTACEAN'."),
+        }
+    }
+
     fn keys_hints<'a>(&self) -> Line<'a> {
         Line::from(vec![
             Span::styled("C-Q", Style::default().add_modifier(Modifier::BOLD)),
