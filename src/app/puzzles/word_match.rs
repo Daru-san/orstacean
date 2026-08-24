@@ -1,4 +1,6 @@
 use std::collections::BTreeMap;
+use std::ops::Div;
+use std::ops::Sub;
 use std::time::Duration;
 
 use crossterm::event;
@@ -19,6 +21,7 @@ use ratatui::style::Style;
 use ratatui::symbols::border;
 use ratatui::text::Line;
 use ratatui::text::Span;
+use ratatui::widgets::Paragraph;
 use ratatui::widgets::Widget;
 use ratatui::widgets::{Block, Borders};
 use ratatui_hypertile::HypertileWidget;
@@ -31,10 +34,9 @@ type PaneMap = BTreeMap<PaneId, (char, Color)>;
 
 pub struct WordMatch {
     word: &'static str,
-    panes: PaneMap,
-    layout: Hypertile,
     completed: bool,
     timer: Option<Timer>,
+    word_chars: Vec<char>,
 }
 
 impl WordMatch {
@@ -47,49 +49,35 @@ impl WordMatch {
         // shuffle chars
         chars.shuffle(&mut rng);
 
-        layout.set_split_policy(ratatui_hypertile::SplitPolicy::Half);
-
-        let mut panes = PaneMap::new();
-
-        let mut leaf_ids: Vec<PaneId> = Vec::new();
-
-        for (i, c) in chars.into_iter().enumerate() {
-            if i == 0 {
-                let id = PaneId::ROOT;
-                leaf_ids.push(PaneId::ROOT);
-                panes.insert(id, (c, Color::White));
-                continue;
-            }
-            let target = leaf_ids[(i - 1) % leaf_ids.len()];
-            loop {
-                layout.apply_action(HypertileAction::FocusPrev);
-                let focused = layout.focused_pane().unwrap();
-                if focused.eq(&target) {
-                    break;
-                }
-            }
-            let new_id = layout.split_focused(Direction::Horizontal)?;
-            leaf_ids.push(new_id);
-            panes.insert(new_id, (c, Color::White));
-        }
         Ok(Self {
             word,
-            layout,
-            panes,
             completed: false,
             timer: timeout.map(Timer::new),
+            word_chars: chars,
         })
     }
 
     fn check_sorted(&self) -> bool {
-        let word = self
-            .layout
-            .panes()
-            .into_iter()
-            .filter_map(|pane| self.panes.get(&pane.id).copied().map(|pane| pane.0))
-            .collect::<String>();
+        self.word.chars().eq(self.word_chars.iter().copied())
+    }
 
-        word.eq(&self.word)
+    fn draw_tiles(&self, frame: &mut Frame, area: Rect) {
+        let width = area.width;
+
+        let inner_width = width.saturating_sub(5);
+
+        let individual_size = inner_width
+            .div(self.word_chars.len() as u16)
+            .min(area.height);
+
+        let mut x = 0;
+        for char in self.word_chars.iter().copied() {
+            let rect = Rect::new(x, 0, individual_size, individual_size);
+            Paragraph::new(char.to_string())
+                .block(Block::bordered())
+                .render(rect, frame.buffer_mut());
+            x += individual_size;
+        }
     }
 }
 
@@ -100,17 +88,8 @@ impl IPuzzle for WordMatch {
             let [main_area, bottom_area] = area.layout(&layout);
             timer.render(bottom_area, frame.buffer_mut());
 
-            frame.render_stateful_widget(
-                HypertileWidget::new(|pane, buf| render_pane(pane, buf, &self.panes)),
-                main_area,
-                &mut self.layout,
-            );
+            self.draw_tiles(frame, main_area);
         } else {
-            frame.render_stateful_widget(
-                HypertileWidget::new(|pane, buf| render_pane(pane, buf, &self.panes)),
-                area,
-                &mut self.layout,
-            );
         }
     }
 
