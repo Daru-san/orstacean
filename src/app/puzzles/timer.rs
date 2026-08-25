@@ -1,4 +1,4 @@
-use std::ops::{AddAssign, Div};
+use std::ops::{AddAssign, Sub};
 use std::time::{Duration, Instant};
 
 use ratatui::style::{Color, Style};

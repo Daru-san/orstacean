@@ -1,12 +1,12 @@
-use std::cell::{Ref, RefCell};
+use std::cell::RefCell;
 use std::ops::AddAssign;
 use std::rc::Rc;
 use std::time::Duration;
 
-use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
+use crossterm::event::{Event, KeyCode, KeyModifiers};
 use ratatui::Frame;
 use ratatui::layout::Constraint::{self, Min, Percentage};
-use ratatui::layout::{Direction, Layout, Rect};
+use ratatui::layout::{Layout, Rect};
 use ratatui::style::{Modifier, Style, Stylize};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Paragraph, Widget};

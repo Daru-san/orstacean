@@ -34,7 +34,7 @@ impl IPuzzle for Cipher {
     fn failure_message(&self) -> Vec<String> {
         vec![]
     }
-    fn handle_events(&mut self, event: crossterm::event::Event) -> color_eyre::Result<()> {
+    fn handle_events(&mut self, _event: crossterm::event::Event) -> color_eyre::Result<()> {
         Ok(())
     }
     fn instructions(&self) -> Vec<String> {
@@ -46,6 +46,6 @@ impl IPuzzle for Cipher {
     fn keys_hints<'a>(&self) -> ratatui::prelude::Line<'a> {
         Line::default()
     }
-    fn render(&mut self, frame: &mut ratatui::prelude::Frame, area: ratatui::prelude::Rect) {}
-    fn toggle_pause(&mut self, pause: bool) {}
+    fn render(&mut self, _frame: &mut ratatui::prelude::Frame, _area: ratatui::prelude::Rect) {}
+    fn toggle_pause(&mut self, _pause: bool) {}
 }

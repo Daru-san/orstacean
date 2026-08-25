@@ -5,11 +5,9 @@ use rand::seq::SliceRandom;
 use ratatui::layout::Constraint::{Min, Percentage};
 use ratatui::layout::Layout;
 use ratatui::style::{Color, Modifier, Style};
-use ratatui::text::{self, Line, Span};
+use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Paragraph, Widget};
-use ratatui_form::TextInput;
 use ratatui_textarea::TextArea;
-use rodio::cpal::FromSample;
 
 use crate::app::puzzles::IPuzzle;
 use crate::app::puzzles::riddles::list::RIDDLES;

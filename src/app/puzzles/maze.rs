@@ -1,8 +1,8 @@
 use std::collections::VecDeque;
 use std::time::{Duration, Instant};
 
-use crossterm::event::{self, Event, KeyCode};
-use knossos::maze::{Algorithm, GameMap, OrthogonalMaze, OrthogonalMazeBuilder, algorithms};
+use crossterm::event::{Event, KeyCode};
+use knossos::maze::{GameMap, OrthogonalMazeBuilder};
 use ratatui::Frame;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Constraint::{Min, Percentage};
