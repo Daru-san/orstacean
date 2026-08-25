@@ -194,7 +194,7 @@ impl PuzzleView {
                 self.results.push(String::from("Crab"));
             }
             Puzzle::Tile2 => {
-                let next = Riddles::new(Duration::from_mins(10));
+                let next = Riddles::new(Duration::from_mins(5));
                 let instructions = next.instructions();
                 let puzzle = Rc::new(RefCell::new(next));
                 self.active_puzzle = Puzzle::Riddle;
@@ -216,7 +216,7 @@ impl PuzzleView {
                 self.results.push(String::from("Crustacean"));
             }
             Puzzle::Riddle => {
-                let next = Maze::new(Duration::from_mins(5));
+                let next = Maze::new(Duration::from_mins(3));
                 let instructions = next.instructions();
                 let puzzle = Rc::new(RefCell::new(next));
 
