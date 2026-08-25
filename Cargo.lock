@@ -1874,7 +1874,6 @@ dependencies = [
  "ratatui",
  "ratatui-comfy-toaster",
  "ratatui-form",
- "ratatui-hypertile",
  "ratatui-image",
  "ratatui-splash-screen",
  "ratatui-textarea",
@@ -2384,15 +2383,6 @@ dependencies = [
  "serde",
  "serde_json",
  "unicode-width",
-]
-
-[[package]]
-name = "ratatui-hypertile"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d4695784e403ace739a2d29e9d6e840518fbab41bb7759a4855e8f6d24e4ba8f"
-dependencies = [
- "ratatui",
 ]
 
 [[package]]

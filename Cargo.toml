@@ -22,7 +22,6 @@ rand = "0.10.2"
 ratatui = {version = "0.30.2", features = ["unstable-rendered-line-info"]}
 ratatui-comfy-toaster = "0.6.2"
 ratatui-form = { git = "https://github.com/Daru-san/ratatui-form.git", version = "0.1.1" }
-ratatui-hypertile = "0.4.0"
 ratatui-image = "11.0.6"
 ratatui-splash-screen = { version = "0.1.5", features = ["png", "jpeg"] }
 ratatui-textarea = "0.9.2"
