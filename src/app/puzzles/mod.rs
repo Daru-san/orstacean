@@ -132,7 +132,7 @@ impl PuzzleView {
                     && key.modifiers.eq(&KeyModifiers::CONTROL)
                 {
                     let paused = puzzle.is_paused();
-                    puzzle.toggle_pause(paused);
+                    puzzle.toggle_pause(!paused);
                 }
             }
             puzzle.handle_events(event)
