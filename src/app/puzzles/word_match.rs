@@ -1,4 +1,5 @@
 use std::collections::BTreeMap;
+use std::collections::VecDeque;
 use std::ops::Div;
 use std::ops::Sub;
 use std::time::Duration;
@@ -12,7 +13,6 @@ use ratatui::Frame;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Constraint::Min;
 use ratatui::layout::Constraint::Percentage;
-use ratatui::layout::Direction;
 use ratatui::layout::Layout;
 use ratatui::layout::Rect;
 use ratatui::style::Color;
@@ -21,6 +21,7 @@ use ratatui::style::Style;
 use ratatui::symbols::border;
 use ratatui::text::Line;
 use ratatui::text::Span;
+use ratatui::widgets::Padding;
 use ratatui::widgets::Paragraph;
 use ratatui::widgets::Widget;
 use ratatui::widgets::{Block, Borders};
@@ -36,7 +37,13 @@ pub struct WordMatch {
     word: &'static str,
     completed: bool,
     timer: Option<Timer>,
-    word_chars: Vec<char>,
+    word_chars: VecDeque<char>,
+    hovered_index: usize,
+}
+
+enum Direction {
+    Left,
+    Right,
 }
 
 impl WordMatch {
@@ -53,7 +60,8 @@ impl WordMatch {
             word,
             completed: false,
             timer: timeout.map(Timer::new),
-            word_chars: chars,
+            word_chars: chars.into(),
+            hovered_index: 0,
         })
     }
 
@@ -71,12 +79,49 @@ impl WordMatch {
             .min(area.height);
 
         let mut x = 0;
-        for char in self.word_chars.iter().copied() {
+        for (index, char) in self.word_chars.iter().copied().enumerate() {
             let rect = Rect::new(x, 0, individual_size, individual_size);
             Paragraph::new(char.to_string())
-                .block(Block::bordered())
+                .block(Block::bordered().padding(Padding::uniform(4)).border_style(
+                    Style::default().bg(if index == self.hovered_index {
+                        Color::Blue
+                    } else {
+                        Color::White
+                    }),
+                ))
                 .render(rect, frame.buffer_mut());
             x += individual_size;
+        }
+    }
+
+    fn move_selected_tile(&mut self, direction: Direction) {
+        let index = self.hovered_index;
+
+        let max = self.word_chars.len();
+
+        if index < max && index > 0 {
+            let new_index = match direction {
+                Direction::Left => index - 1,
+                Direction::Right => index + 1,
+            };
+
+            self.word_chars.swap(index, new_index);
+            self.hovered_index = new_index;
+        }
+    }
+
+    fn select_tile(&mut self, direction: Direction) {
+        let index = self.hovered_index;
+
+        let max = self.word_chars.len();
+
+        if index < max && index > 0 {
+            let new_index = match direction {
+                Direction::Left => index - 1,
+                Direction::Right => index + 1,
+            };
+
+            self.hovered_index = new_index;
         }
     }
 }
@@ -116,29 +161,16 @@ impl IPuzzle for WordMatch {
 
         match key.code {
             KeyCode::Left | KeyCode::Char('h') if none => {
-                focus(&mut self.layout, Direction::Horizontal, Towards::Start);
+                self.select_tile(Direction::Left);
             }
             KeyCode::Right | KeyCode::Char('l') if none => {
-                focus(&mut self.layout, Direction::Horizontal, Towards::End);
+                self.select_tile(Direction::Right);
             }
-            KeyCode::Up | KeyCode::Char('k') if none => {
-                focus(&mut self.layout, Direction::Vertical, Towards::Start);
-            }
-            KeyCode::Down | KeyCode::Char('j') if none => {
-                focus(&mut self.layout, Direction::Vertical, Towards::End);
-            }
-
             KeyCode::Left | KeyCode::Char('H') if shift => {
-                move_pane(&mut self.layout, Direction::Horizontal, Towards::Start);
+                self.move_selected_tile(Direction::Left);
             }
             KeyCode::Right | KeyCode::Char('L') if shift => {
-                move_pane(&mut self.layout, Direction::Horizontal, Towards::End);
-            }
-            KeyCode::Up | KeyCode::Char('K') if shift => {
-                move_pane(&mut self.layout, Direction::Vertical, Towards::Start);
-            }
-            KeyCode::Down | KeyCode::Char('J') if shift => {
-                move_pane(&mut self.layout, Direction::Vertical, Towards::End);
+                self.move_selected_tile(Direction::Right)
             }
             KeyCode::Char('s') if ctrl => {
                 self.completed = true;
