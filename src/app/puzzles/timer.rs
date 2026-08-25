@@ -73,7 +73,7 @@ impl Widget for &mut Timer {
         Self: Sized,
     {
         let throbber = Throbber::default()
-            .label(format!("{:?}", self.last_pause))
+            .label(format!("{:?}", self.timeout.sub(self.last_duration)))
             .throbber_set(CLOCK)
             .style(Style::default().fg(determine_color(self.timeout, self.last_duration)));
         <Throbber as StatefulWidget>::render(throbber, area, buf, &mut self.throbber_state);
