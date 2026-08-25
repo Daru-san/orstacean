@@ -135,7 +135,11 @@ impl PuzzleView {
                     puzzle.toggle_pause(!paused);
                 }
             }
-            puzzle.handle_events(event)
+            if !puzzle.is_paused() {
+                puzzle.handle_events(event)
+            } else {
+                Ok(())
+            }
         } else {
             self.chatbox.handle_events(event);
             Ok(())
