@@ -1,4 +1,4 @@
-use ratatui::{style::Style, widgets::Block};
+use ratatui::{style::Style, text::Line, widgets::Block};
 use ratatui_textarea::TextArea;
 
 use crate::app::puzzles::IPuzzle;
@@ -22,4 +22,30 @@ impl Cipher {
 
 impl IPuzzle for Cipher {
     fn update(&mut self) {}
+    fn can_pause(&self) -> bool {
+        false
+    }
+    fn completed(&self) -> bool {
+        false
+    }
+    fn failed(&self) -> bool {
+        false
+    }
+    fn failure_message(&self) -> Vec<String> {
+        vec![]
+    }
+    fn handle_events(&mut self, event: crossterm::event::Event) -> color_eyre::Result<()> {
+        Ok(())
+    }
+    fn instructions(&self) -> Vec<String> {
+        vec![]
+    }
+    fn is_paused(&self) -> bool {
+        false
+    }
+    fn keys_hints<'a>(&self) -> ratatui::prelude::Line<'a> {
+        Line::default()
+    }
+    fn render(&mut self, frame: &mut ratatui::prelude::Frame, area: ratatui::prelude::Rect) {}
+    fn toggle_pause(&mut self, pause: bool) {}
 }
