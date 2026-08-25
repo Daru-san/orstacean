@@ -10,7 +10,7 @@ use crossterm::event::KeyCode;
 use crossterm::event::KeyModifiers;
 use rand::seq::SliceRandom;
 use ratatui::Frame;
-use ratatui::buffer::Buffer;
+use ratatui::layout::Constraint;
 use ratatui::layout::Constraint::Min;
 use ratatui::layout::Constraint::Percentage;
 use ratatui::layout::Layout;
@@ -21,6 +21,7 @@ use ratatui::style::Style;
 use ratatui::symbols::border;
 use ratatui::text::Line;
 use ratatui::text::Span;
+use ratatui::widgets::Block;
 use ratatui::widgets::Padding;
 use ratatui::widgets::Paragraph;
 use ratatui::widgets::Widget;
@@ -104,17 +105,24 @@ impl WordMatch {
     }
 
     fn draw_tiles(&self, frame: &mut Frame, area: Rect) {
+        let area = area.centered(Constraint::default(), Constraint::default());
+
         let width = area.width;
 
-        let inner_width = width.saturating_sub(5);
+        let inner_width = width.saturating_sub(7);
 
         let individual_size = inner_width
             .div(self.word_chars.len() as u16)
-            .min(area.height);
+            .min(area.height)
+            - 2;
+
+        let total_size = individual_size * self.word_chars.len() as u16;
+
+        let padding = inner_width - total_size;
 
         let mut x = 0;
         for (index, char) in self.word_chars.iter().copied().enumerate() {
-            let rect = Rect::new(x, 0, individual_size, individual_size);
+            let rect = Rect::new(x + padding, area.y, individual_size, individual_size);
             Paragraph::new(char.to_string())
                 .style(Style::default().add_modifier(Modifier::BOLD))
                 .centered()
