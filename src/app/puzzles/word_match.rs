@@ -133,11 +133,21 @@ impl WordMatch {
 
         let max = self.word_chars.len();
 
-        if index < max && index > 0 {
+        if index < max {
             let new_index = match direction {
-                Direction::Left => index - 1,
+                Direction::Left => {
+                    if index == 0 {
+                        return;
+                    } else {
+                        index - 1
+                    }
+                }
                 Direction::Right => index + 1,
             };
+
+            if new_index == max {
+                return;
+            }
 
             self.word_chars.swap(index, new_index);
             self.hovered_index = new_index;
@@ -149,10 +159,10 @@ impl WordMatch {
 
         let max = self.word_chars.len();
 
-        if index < max && index > 0 {
+        if index < max {
             let new_index = match direction {
-                Direction::Left => index - 1,
-                Direction::Right => index + 1,
+                Direction::Left => index.saturating_sub(1),
+                Direction::Right => (index + 1).min(max - 1),
             };
 
             self.hovered_index = new_index;
