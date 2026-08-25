@@ -12,6 +12,7 @@ pub struct Timer {
     paused_for: Duration,
     last_pause: Option<Instant>,
     last_duration: Duration,
+    last_throbber_update: Instant,
 }
 
 impl Timer {
@@ -23,16 +24,20 @@ impl Timer {
             paused_for: Duration::ZERO,
             last_pause: None,
             last_duration: Duration::ZERO,
+            last_throbber_update: Instant::now(),
         }
     }
 
     pub fn update(&mut self) {
-        self.throbber_state.calc_next();
+        let now = Instant::now();
+
+        if now.duration_since(self.last_throbber_update) > Duration::from_millis(100) {
+            self.throbber_state.calc_next();
+            self.last_throbber_update = now;
+        }
         if let Some(pause) = self.last_pause {
-            let now = Instant::now();
             self.paused_for.add_assign(now.duration_since(pause));
         } else if !self.done() {
-            let now = Instant::now();
             self.last_duration = now.duration_since(self.start);
         }
     }
