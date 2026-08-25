@@ -65,6 +65,10 @@ impl Timer {
     pub const fn unpause(&mut self) {
         self.last_pause.take();
     }
+
+    pub const fn duration(&self) -> Duration {
+        self.timeout
+    }
 }
 
 impl Widget for &mut Timer {
