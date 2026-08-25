@@ -24,14 +24,9 @@ use ratatui::text::Span;
 use ratatui::widgets::Padding;
 use ratatui::widgets::Paragraph;
 use ratatui::widgets::Widget;
-use ratatui::widgets::{Block, Borders};
-use ratatui_hypertile::HypertileWidget;
-use ratatui_hypertile::{Hypertile, HypertileAction, MoveScope, PaneId, PaneSnapshot, Towards};
 
 use crate::app::puzzles::IPuzzle;
 use crate::app::puzzles::timer::Timer;
-
-type PaneMap = BTreeMap<PaneId, (char, Color)>;
 
 pub struct WordMatch {
     word: &'static str,
@@ -48,8 +43,6 @@ enum Direction {
 
 impl WordMatch {
     pub fn new(word: &'static str, timeout: Option<Duration>) -> color_eyre::Result<Self> {
-        let mut layout = Hypertile::new();
-
         let mut chars: Vec<char> = word.chars().collect();
 
         let mut rng = rand::rng();
@@ -250,34 +243,4 @@ impl IPuzzle for WordMatch {
     fn can_pause(&self) -> bool {
         self.timer.is_some()
     }
-}
-
-fn move_pane(layout: &mut Hypertile, direction: Direction, towards: Towards) {
-    layout.apply_action(HypertileAction::MoveFocused {
-        direction,
-        towards,
-        scope: MoveScope::Window,
-    });
-}
-
-fn focus(layout: &mut Hypertile, direction: Direction, towards: Towards) {
-    layout.apply_action(HypertileAction::FocusDirection { direction, towards });
-}
-
-fn render_pane(pane: PaneSnapshot, buf: &mut Buffer, panes: &PaneMap) {
-    let (title, color) = panes
-        .get(&pane.id)
-        .map(|(t, c)| (*t, *c))
-        .unwrap_or(('%', Color::White));
-
-    let mut block = Block::default()
-        .borders(Borders::ALL)
-        .border_style(Style::default().fg(color))
-        .title(title.to_string());
-    if pane.is_focused {
-        block = block
-            .border_set(border::THICK)
-            .border_style(Style::default().fg(color).bold());
-    }
-    block.render(pane.rect, buf);
 }
