@@ -116,13 +116,18 @@ impl WordMatch {
         for (index, char) in self.word_chars.iter().copied().enumerate() {
             let rect = Rect::new(x, 0, individual_size, individual_size);
             Paragraph::new(char.to_string())
-                .block(Block::bordered().padding(Padding::uniform(4)).border_style(
-                    Style::default().bg(if index == self.hovered_index {
-                        Color::Blue
-                    } else {
-                        Color::White
-                    }),
-                ))
+                .style(Style::default().add_modifier(Modifier::BOLD))
+                .centered()
+                .block(
+                    Block::bordered()
+                        .padding(Padding::uniform(4))
+                        .border_set(border::THICK)
+                        .border_style(Style::default().fg(if index == self.hovered_index {
+                            Color::Blue
+                        } else {
+                            Color::White
+                        })),
+                )
                 .render(rect, frame.buffer_mut());
             x += individual_size;
         }
