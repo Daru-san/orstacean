@@ -24,7 +24,10 @@ use ratatui::text::Span;
 use ratatui::widgets::Padding;
 use ratatui::widgets::Paragraph;
 use ratatui::widgets::Widget;
+use ratatui_comfy_toaster::ToastBuilder;
+use ratatui_comfy_toaster::ToastType;
 
+use crate::app::AppState;
 use crate::app::puzzles::IPuzzle;
 use crate::app::puzzles::timer::Timer;
 
@@ -34,6 +37,10 @@ pub struct WordMatch {
     timer: Option<Timer>,
     word_chars: VecDeque<char>,
     hovered_index: usize,
+    app_state: AppState,
+    remaining_hints: usize,
+}
+
 #[derive(Debug, Copy, Clone)]
 pub enum Word {
     Crab,
@@ -65,6 +72,7 @@ enum Direction {
 
 impl WordMatch {
     pub fn new(
+        app_state: AppState,
         word: Word,
         timeout: Option<Duration>,
     ) -> color_eyre::Result<Self> {
@@ -80,6 +88,11 @@ impl WordMatch {
             timer: timeout.map(Timer::new),
             word_chars: chars.into(),
             hovered_index: 0,
+            app_state,
+            remaining_hints: match word {
+                Word::Crab => 0,
+                Word::Crustacean => 1,
+            },
         })
     }
 
@@ -161,6 +174,15 @@ impl IPuzzle for WordMatch {
 
     fn update(&mut self) {
         if let Some(ref mut timer) = self.timer {
+            if matches!(self.word, Word::Crustacean)
+                && timer.percentage_done() >= 50.0
+                && timer.percentage_done() <= 60.0
+                && self.remaining_hints > 0
+            {
+                self.app_state.show_toast(
+                    ToastBuilder::default().title("The word contains the phrase `Rust`."),
+                );
+            }
             timer.update();
         }
     }
@@ -195,6 +217,19 @@ impl IPuzzle for WordMatch {
             }
             KeyCode::Char('s') if ctrl => {
                 self.completed = true;
+                self.app_state.show_toast(
+                    ToastBuilder::default()
+                        .duration(Duration::from_secs(1))
+                        .toast_type(ToastType::Success)
+                        .title(if self.completed() {
+                            format!("Word {} was correct!", self.word)
+                        } else {
+                            format!(
+                                "Word {} was incorrect.",
+                                self.word_chars.iter().copied().collect::<String>(),
+                            )
+                        }),
+                );
             }
             _ => {}
         }
