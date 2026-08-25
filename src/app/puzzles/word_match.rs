@@ -278,14 +278,34 @@ impl IPuzzle for WordMatch {
     }
 
     fn instructions(&self) -> Vec<String> {
-        vec![
-            String::from("Welcome to the Word Match Puzzle."),
-            String::from("This one is rather simple."),
-            String::from(
-                "Arrange the letters in the grid until they make up the word in question.",
-            ),
-            String::from("No time limitation shall be put on you during this puzzle."),
-        ]
+        if let Some(ref timer) = self.timer {
+            vec![
+                String::from("Arrange the letters in the grid until they make up a word."),
+                String::from(
+                    "This word describes a particular creature commonly found on beaches.",
+                ),
+                String::from("Be mindful of your time."),
+                format!(
+                    "You have exactly {:?} to complete this challenge.",
+                    timer.duration()
+                ),
+                String::from(
+                    "Your time will be shown in the bottom left corner, be sure to pay attention to it.",
+                ),
+            ]
+        } else {
+            vec![
+                String::from("Welcome to the Word Match Puzzle."),
+                String::from("This one is rather simple."),
+                String::from(
+                    "This word describes a particular creature commonly found on beaches.",
+                ),
+                String::from(
+                    "Arrange the letters in the grid until they make up the word in question.",
+                ),
+                String::from("No time limitation shall be put on you during this puzzle."),
+            ]
+        }
     }
 
     fn toggle_pause(&mut self, pause: bool) {
