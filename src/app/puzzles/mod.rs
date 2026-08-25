@@ -16,7 +16,7 @@ use crate::app::AppState;
 use crate::app::chat_box::ChatBox;
 use crate::app::puzzles::maze::Maze;
 use crate::app::puzzles::riddles::Riddles;
-use crate::app::puzzles::word_match::WordMatch;
+use crate::app::puzzles::word_match::{Word, WordMatch};
 
 mod cipher;
 mod maze;
@@ -57,7 +57,7 @@ pub trait IPuzzle {
 
 impl PuzzleView {
     pub fn new(state: AppState) -> color_eyre::Result<Self> {
-        let grid = WordMatch::new("CRAB", None)?;
+        let grid = WordMatch::new(state.clone(), Word::Crab, None)?;
         let instructions = grid.instructions();
         let puzzle = Rc::new(RefCell::new(grid));
         Ok(Self {

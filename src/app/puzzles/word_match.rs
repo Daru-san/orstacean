@@ -29,11 +29,33 @@ use crate::app::puzzles::IPuzzle;
 use crate::app::puzzles::timer::Timer;
 
 pub struct WordMatch {
-    word: &'static str,
+    word: Word,
     completed: bool,
     timer: Option<Timer>,
     word_chars: VecDeque<char>,
     hovered_index: usize,
+#[derive(Debug, Copy, Clone)]
+pub enum Word {
+    Crab,
+    Crustacean,
+}
+
+impl AsRef<str> for Word {
+    fn as_ref(&self) -> &str {
+        match self {
+            Word::Crab => "CRAB",
+            Word::Crustacean => "CRUSTACEAN",
+        }
+    }
+}
+
+impl Display for Word {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Crab => f.write_str("CRAB"),
+            Self::Crustacean => f.write_str("CRUSTACEAN"),
+        }
+    }
 }
 
 enum Direction {
@@ -42,8 +64,11 @@ enum Direction {
 }
 
 impl WordMatch {
-    pub fn new(word: &'static str, timeout: Option<Duration>) -> color_eyre::Result<Self> {
-        let mut chars: Vec<char> = word.chars().collect();
+    pub fn new(
+        word: Word,
+        timeout: Option<Duration>,
+    ) -> color_eyre::Result<Self> {
+        let mut chars: Vec<char> = word.as_ref().chars().collect();
 
         let mut rng = rand::rng();
         // shuffle chars
@@ -59,7 +84,10 @@ impl WordMatch {
     }
 
     fn check_sorted(&self) -> bool {
-        self.word.chars().eq(self.word_chars.iter().copied())
+        self.word
+            .as_ref()
+            .chars()
+            .eq(self.word_chars.iter().copied())
     }
 
     fn draw_tiles(&self, frame: &mut Frame, area: Rect) {
@@ -175,7 +203,7 @@ impl IPuzzle for WordMatch {
 
     fn failure_message(&self) -> Vec<String> {
         match self.word {
-            "CRAB" => vec![
+            Word::Crab => vec![
                 String::from("Spelling."),
                 String::from("S..p..e..l..l..i..n..g"),
                 String::from("How did you fail to spell such a simple word??"),
@@ -183,14 +211,13 @@ impl IPuzzle for WordMatch {
                 String::from("No, I will absolutely hold it against you."),
                 String::from("Come back when you can spell correctly."),
             ],
-            "CRUSTACEAN" => {
+            Word::Crustacean => {
                 if self.timer.as_ref().is_some_and(|timer| timer.done()) {
                     vec![String::from("")]
                 } else {
                     vec![String::from("")]
                 }
             }
-            _ => unreachable!("The only two words on this puzzle must be 'CRAB' and 'CRUSTACEAN'."),
         }
     }
 
