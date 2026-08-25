@@ -57,7 +57,7 @@ pub struct App {
     progress_form: ProgressForm,
     input_form: InputForm,
     confirm_state: Option<State>,
-    dashboard: Intermission,
+    intermission: Intermission,
     puzzle_view: PuzzleView,
     global_state: AppState,
 }
