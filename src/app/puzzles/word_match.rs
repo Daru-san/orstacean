@@ -169,6 +169,7 @@ impl IPuzzle for WordMatch {
 
             self.draw_tiles(frame, main_area);
         } else {
+            self.draw_tiles(frame, area);
         }
     }
 
