@@ -167,7 +167,11 @@ impl PuzzleView {
     pub fn advance(&mut self) -> color_eyre::Result<()> {
         match self.active_puzzle {
             Puzzle::Tile1 => {
-                let next = WordMatch::new("CRUSTACEAN", Some(Duration::from_mins(5)))?;
+                let next = WordMatch::new(
+                    self.state.clone(),
+                    Word::Crustacean,
+                    Some(Duration::from_mins(1)),
+                )?;
                 let instructions = next.instructions();
                 let puzzle = Rc::new(RefCell::new(next));
 
@@ -244,7 +248,11 @@ impl PuzzleView {
     pub fn demote(&mut self) -> color_eyre::Result<()> {
         match self.active_puzzle {
             Puzzle::Tile1 => {
-                let next = WordMatch::new("CRAB", Some(Duration::from_mins(2)))?;
+                let next = WordMatch::new(
+                    self.state.clone(),
+                    Word::Crab,
+                    Some(Duration::from_secs(50)),
+                )?;
                 let instructions = next.instructions();
                 let puzzle = Rc::new(RefCell::new(next));
 
@@ -271,7 +279,11 @@ impl PuzzleView {
             Puzzle::Tile2 => {}
             Puzzle::Riddle => {}
             Puzzle::Maze => {
-                let next = WordMatch::new("CRAB", Some(Duration::from_mins(1)))?;
+                let next = WordMatch::new(
+                    self.state.clone(),
+                    Word::Crab,
+                    Some(Duration::from_secs(30)),
+                )?;
                 let instructions = next.instructions();
                 let puzzle = Rc::new(RefCell::new(next));
 
