@@ -11,6 +11,9 @@ use ratatui::layout::{Layout, Rect};
 use ratatui::style::{Color, Modifier, Style, Stylize};
 use ratatui::text::{Line, Span, Text};
 use ratatui::widgets::{Block, LineGauge, Paragraph, Widget};
+use ratatui_comfy_toaster::{
+    ToastBorderMode, ToastBuilder, ToastEngineBuilder, ToastProgressBarStyle,
+};
 use ratatui_splash_screen::{SplashConfig, SplashScreen};
 use tui_popup::Popup;
 use tui_spinner::RectSpinner;
@@ -65,6 +68,7 @@ pub struct AppState {
     volume: Rc<Cell<f32>>,
     current_track: Rc<Cell<Track>>,
     sink: Rc<RefCell<Option<rodio::Sink>>>,
+    toast_engine: Rc<RefCell<ratatui_comfy_toaster::ToastEngine<()>>>,
 }
 
 impl AppState {
@@ -132,16 +136,29 @@ impl AppState {
     pub const fn mixer(&self) -> &rodio::mixer::Mixer {
         &self.mixer
     }
+
+    pub fn show_toast(&self, toast: ToastBuilder) {
+        let mut engine = self.toast_engine.borrow_mut();
+
+        engine.show_toast(toast);
+    }
 }
 
 impl App {
     pub fn new(mixer: rodio::mixer::Mixer) -> color_eyre::Result<Self> {
         let volume = Rc::new(Cell::new(0.5));
+        let toast_engine = ToastEngineBuilder::new(Rect::new(0, 0, 120, 40))
+            .default_duration(Duration::from_secs(4))
+            .default_progress_bar_style(ToastProgressBarStyle::FullBlock)
+            .default_progress_bar(true)
+            .default_border_mode(ToastBorderMode::Full)
+            .build();
         let app_state = AppState {
             mixer,
             volume,
             current_track: Rc::new(Cell::new(Track::Lobby)),
             sink: Rc::default(),
+            toast_engine: Rc::new(RefCell::new(toast_engine)),
         };
         Ok(Self {
             state: State::Loading,
