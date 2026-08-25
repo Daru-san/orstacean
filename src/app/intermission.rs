@@ -10,7 +10,7 @@ use crate::APP_NAME;
 use crate::app::AppState;
 use crate::app::chat_box::ChatBox;
 
-pub struct Dashboard {
+pub struct Intermission {
     chatbox: ChatBox,
     stage: Stage,
     state: AppState,
@@ -46,7 +46,7 @@ fn age_suffix(age: u8) -> &'static str {
     }
 }
 
-impl Dashboard {
+impl Intermission {
     pub fn new(state: AppState) -> Self {
         Self {
             chatbox: ChatBox::new(&[], state.clone()),
@@ -74,6 +74,9 @@ impl Dashboard {
                 String::from("They're so simple you can't fail."),
                 String::from("..."),
                 String::from("If you do fail however, I'm not sure I'll be able to let it slide."),
+                String::from(
+                    "Keep an eye out for the bottom right corner, messages will be given to you during certain puzzles for hints or results.",
+                ),
                 String::from("In any case. You should get started now. You don't have much time."),
                 String::from("You will be taken to puzzle number #1."),
                 String::from("準備はできたか？"),

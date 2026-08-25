@@ -15,14 +15,14 @@ use ratatui_splash_screen::{SplashConfig, SplashScreen};
 use tui_popup::Popup;
 use tui_spinner::RectSpinner;
 
-use crate::app::dashboard::{Dashboard, Stage};
 use crate::app::input::InputForm;
+use crate::app::intermission::{Intermission, Stage};
 use crate::app::puzzles::PuzzleView;
 use crate::{APP_NAME, Track};
 
 mod chat_box;
-mod dashboard;
 mod input;
+mod intermission;
 mod puzzles;
 
 pub static SPLASH_CONFIG: SplashConfig = SplashConfig {
@@ -54,7 +54,7 @@ pub struct App {
     progress_form: ProgressForm,
     input_form: InputForm,
     confirm_state: Option<State>,
-    dashboard: Dashboard,
+    dashboard: Intermission,
     puzzle_view: PuzzleView,
     global_state: AppState,
 }
@@ -153,7 +153,7 @@ impl App {
             },
             input_form: InputForm::new(app_state.clone()),
             confirm_state: None,
-            dashboard: Dashboard::new(app_state.clone()),
+            intermission: Intermission::new(app_state.clone()),
             puzzle_view: PuzzleView::new(app_state.clone())?,
             global_state: app_state,
         })
@@ -168,7 +168,7 @@ impl App {
                         self.input_form.draw(frame);
                     }
                     State::Dashboard(_) => {
-                        self.dashboard.render(frame);
+                        self.intermission.render(frame);
                     }
                     State::Ready => {
                         self.puzzle_view.render(frame, frame.area());
@@ -264,14 +264,14 @@ impl App {
 
                 if self.progress_form.value >= 1. {
                     self.state = State::Dashboard(Stage::Greeting);
-                    self.dashboard.greet();
+                    self.intermission.greet();
                     self.global_state.change_track(Track::Lobby)?;
                 }
             }
             State::Input => {
                 let result = self.input_form.update();
                 if let Some(result) = result {
-                    self.dashboard.introduce_puzzles(result.name, result.age);
+                    self.intermission.introduce_puzzles(result.name, result.age);
                     self.state = State::Dashboard(Stage::PuzzleIntro);
                 }
             }
@@ -279,7 +279,7 @@ impl App {
                 self.puzzle_view.update()?;
             }
             State::Dashboard(stage) => {
-                if self.dashboard.update()? {
+                if self.intermission.update()? {
                     match stage {
                         Stage::Greeting => {
                             self.confirm_state.replace(State::Input);
@@ -369,7 +369,7 @@ impl App {
                 self.input_form.handle_event(event);
             }
             State::Dashboard(_) => {
-                self.dashboard.handle_events(event)?;
+                self.intermission.handle_events(event)?;
             }
             State::Ready => {
                 self.puzzle_view.handle_events(event)?;
