@@ -81,7 +81,7 @@ impl Widget for &mut Timer {
 }
 
 fn determine_color(timeout: Duration, elapsed: Duration) -> Color {
-    let percentage = timeout.div_duration_f64(elapsed).clamp(0.0, 1.0) * 100.;
+    let percentage = elapsed.div_duration_f64(timeout).clamp(0.0, 1.0) * 100.;
 
     match percentage {
         0_f64..=60_f64 => Color::Green,
