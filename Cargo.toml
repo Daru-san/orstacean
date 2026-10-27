@@ -19,7 +19,7 @@ image = "0.25.10"
 knossos = "1.2.0"
 num-traits = "0.2.19"
 rand = "0.10.2"
-ratatui = {version = "0.30.2", features = ["unstable-rendered-line-info"]}
+ratatui = { version = "0.30.2", features = ["unstable-rendered-line-info"] }
 ratatui-comfy-toaster = "0.6.2"
 ratatui-form = { git = "https://github.com/Daru-san/ratatui-form.git", version = "0.1.1" }
 ratatui-image = "11.0.6"
@@ -32,7 +32,7 @@ throbber-widgets-tui = "0.11.1"
 tiny-skia = "0.12.0"
 tui-popup = "0.7.6"
 tui-scrollview = "0.6.7"
-tui-spinner = "0.4.0"
+tui-spinner = "0.5.0"
 unicode-width = "0.2.2"
 
 [profile.release]
